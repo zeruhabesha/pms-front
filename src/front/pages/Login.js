@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+/* eslint-disable react/react-in-jsx-scope */
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import {
   CForm,
   CFormInput,
@@ -12,62 +12,48 @@ import {
   CCardHeader,
   CAlert,
   CContainer,
-} from '@coreui/react';
-import { useDispatch, useSelector } from 'react-redux';
-import { loginRequest, loginSuccess, loginFailure } from '../../api/slice/authSlice';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+} from '@coreui/react'
+import { useDispatch, useSelector } from 'react-redux'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 // Import ToastContainer and toast
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // Import CSS for toast notifications
+import { ToastContainer, toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css' // Import CSS for toast notifications
+import { login } from '../../api/actions/authActions'
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({});
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [errors, setErrors] = useState({})
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
 
-  const auth = useSelector((state) => state.auth) || {};
-  const { loading, error } = auth;
+  const auth = useSelector((state) => state.auth) || {}
+  const { loading, error } = auth
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const errors = {};
-    if (!email) errors.email = 'Email is required';
-    if (!password) errors.password = 'Password is required';
+    e.preventDefault()
+    const errors = {}
+    if (!email) errors.email = 'Email is required'
+    if (!password) errors.password = 'Password is required'
 
     if (Object.keys(errors).length > 0) {
-      setErrors(errors);
+      setErrors(errors)
     } else {
-      setErrors({});
-      dispatch(loginRequest());
-
+      setErrors({})
       try {
-        const response = await axios.post('https://pms-backend-sncw.onrender.com/api/v1/auth/login', { email, password });
-        console.log("API Response:", response.data);
-        const { token, user } = response.data.data;
-
-        if (user && user.status === 'active') {
-          dispatch(loginSuccess({ token, user }));
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
-          toast.success('Login successful!', { autoClose: 2000, position: "top-right" }); // Success toast
-          navigate('/dashboard', { replace: true }); // Use replace to prevent back navigation to login
-        } else {
-          toast.error('Your account is not active. Please contact your admin.', { autoClose: 3000, position: "top-right" }); // Error toast
-        }
-        
+        // Dispatch the login action with credentials
+        await dispatch(login({ email, password })).unwrap()
+        toast.success('Login successful!', { autoClose: 2000, position: 'top-right' })
+        navigate('/dashboard', { replace: true })
       } catch (error) {
-        console.error("Login error:", error);
-        const errorMessage = error.response ? error.response.data.errors : 'An error occurred';
-        dispatch(loginFailure(errorMessage));
-        setErrors({ general: errorMessage });
-        toast.error(errorMessage, { autoClose: 3000, position: "top-right" }); // Error toast
+        const errorMessage = error.response ? error.response.data.errors : 'An error occurred'
+        setErrors({ general: errorMessage })
+        toast.error(errorMessage, { autoClose: 3000, position: 'top-right' })
       }
     }
-  };
+  }
 
   return (
     <div>
@@ -75,7 +61,12 @@ const Login = () => {
       <CContainer className="d-flex justify-content-center align-items-center min-vh-100">
         <CCard className="w-100" style={{ maxWidth: '400px' }}>
           <CCardHeader>
-            <motion.h1 className="text-center" initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.h1
+              className="text-center"
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               Login
             </motion.h1>
           </CCardHeader>
@@ -107,16 +98,27 @@ const Login = () => {
                 {errors.password && <CAlert color="danger">{errors.password}</CAlert>}
               </div>
 
-              {errors.general && <CAlert color="danger" className="text-center">{errors.general}</CAlert>}
+              {errors.general && (
+                <CAlert color="danger" className="text-center">
+                  {errors.general}
+                </CAlert>
+              )}
 
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
                 <CButton type="submit" color="primary" block className="mt-3" disabled={loading}>
                   {loading ? 'Logging in...' : 'Login'}
                 </CButton>
               </motion.div>
             </CForm>
             <p className="mt-4 text-center">
-              Don't have an account? <a href="/register" className="text-primary">Register</a>
+              Don&apos;t have an account?{' '}
+              <a href="/register" className="text-primary">
+                Register
+              </a>
             </p>
           </CCardBody>
         </CCard>
@@ -134,7 +136,7 @@ const Login = () => {
         pauseOnHover
       />
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
