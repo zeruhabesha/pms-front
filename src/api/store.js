@@ -1,6 +1,6 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './authSlice'; // Import the auth slice
-import superAdminReducer from './superAdminSlice'; // Import the superAdmin slice
+import authReducer from './slice/authSlice'; // Import the auth slice
+import superAdminReducer from '../store/superAdminSlice'; // Import the superAdmin slice
 
 const store = configureStore({
   reducer: {

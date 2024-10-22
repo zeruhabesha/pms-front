@@ -79,8 +79,6 @@ const App = () => {
             <Route path="/property" element={<ProtectedRoute element={Property} />} />
             <Route path="/report" element={<ProtectedRoute element={Report} />} />
           </Route>
-
-          {/* Catch-all Redirect to 404 */}
           <Route path="*" element={<Navigate to="/404" />} />
         </Routes>
       </Suspense>

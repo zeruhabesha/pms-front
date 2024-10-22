@@ -286,9 +286,7 @@ const handlePrint = () => {
                 </CTableBody>
               </CTable>
             </div>
-            {/* <CButton color="primary" onClick={handlePrint} className="ms-2">
-              <FontAwesomeIcon icon={faPrint} />
-            </CButton> */}
+
             <CButton color="primary" onClick={() => handlePrint()} className="mt-3">
             <FontAwesomeIcon icon={faPrint} /> 
           </CButton>

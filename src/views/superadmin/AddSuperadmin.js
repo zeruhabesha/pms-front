@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { CButton, CModal, CModalBody, CModalHeader, CModalTitle, CModalFooter, CForm, CFormLabel, CFormInput, CRow, CCol } from '@coreui/react';
-import { addSuperAdmin, updateSuperAdmin } from '../../store/superAdminSlice';
+import { addSuperAdmin, updateSuperAdmin } from '../../api/slice/superAdminSlice';
 import { useNavigate } from 'react-router-dom';
 
 const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin }) => {

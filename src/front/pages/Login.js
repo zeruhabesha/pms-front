@@ -14,7 +14,7 @@ import {
   CContainer,
 } from '@coreui/react';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginRequest, loginSuccess, loginFailure } from '../../store/authSlice';
+import { loginRequest, loginSuccess, loginFailure } from '../../api/slice/authSlice';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
@@ -45,7 +45,7 @@ const Login = () => {
       dispatch(loginRequest());
 
       try {
-        const response = await axios.post('http://localhost:4000/api/v1/auth/login', { email, password });
+        const response = await axios.post('https://pms-backend-sncw.onrender.com/api/v1/auth/login', { email, password });
         console.log("API Response:", response.data);
         const { token, user } = response.data.data;
 

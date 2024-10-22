@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 // Define the base URL for the API
-const API_BASE_URL = 'http://localhost:4000/api/v1/users';
+const API_BASE_URL = 'https://pms-backend-sncw.onrender.com/api/v1/users';
 
 // Utility function to get the token from localStorage
 const getToken = () => {
@@ -147,28 +147,27 @@ const superAdminSlice = createSlice({
       })
 
       // Update super admin
-      .addCase(updateSuperAdmin.fulfilled, (state, action) => {
-        const updatedAdmin = action.payload;
-      
-        // Check if the updated super admin is defined
-        if (updatedAdmin && updatedAdmin._id) {
-          const index = state.superAdmins.findIndex((admin) => admin._id === updatedAdmin._id);
-          
-          if (index !== -1) {
-            state.superAdmins[index] = updatedAdmin; // Update the existing admin
-            console.log('SuperAdmin Updated:', updatedAdmin); // Debug updated data
-          } else {
-            console.error('SuperAdmin not found for update:', updatedAdmin._id);
-          }
-        } else {
-          console.error('Failed to update SuperAdmin. Response payload does not contain valid _id');
-        }
-      })
-      .addCase(updateSuperAdmin.rejected, (state, action) => {
-        state.error = action.error.message;
-        console.error('Error updating super admin:', action.error.message);
-      })
+     // Update super admin
+.addCase(updateSuperAdmin.fulfilled, (state, action) => {
+  const updatedAdmin = action.payload;
+  
+  // If _id is missing in the payload, use the one from the request
+  if (updatedAdmin && !updatedAdmin._id) {
+    updatedAdmin._id = action.meta.arg.id;
+  }
 
+  if (updatedAdmin && updatedAdmin._id) {
+    const index = state.superAdmins.findIndex((admin) => admin._id === updatedAdmin._id);
+    if (index !== -1) {
+      state.superAdmins[index] = updatedAdmin; // Update the existing admin
+      console.log('SuperAdmin Updated:', updatedAdmin); // Debug updated data
+    } else {
+      console.error('SuperAdmin not found for update:', updatedAdmin._id);
+    }
+  } else {
+    console.error('Failed to update SuperAdmin. Response payload does not contain valid _id');
+  }
+})
       // Delete super admin
       .addCase(deleteSuperAdmin.fulfilled, (state, action) => {
         console.log('SuperAdmin Deleted:', action.payload); // Debug deleted ID

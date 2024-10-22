@@ -22,7 +22,7 @@ import {
 import { CIcon } from '@coreui/icons-react';
 import { cilPencil, cilTrash } from '@coreui/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchSuperAdmins, deleteSuperAdmin, addSuperAdmin, updateSuperAdmin } from '../../store/superAdminSlice';
+import { fetchSuperAdmins, deleteSuperAdmin, addSuperAdmin, updateSuperAdmin } from '../../api/slice/superAdminSlice';
 import AddSuperAdmin from './AddSuperadmin';
 import EditPhotoModal from '../EditPhotoModal';
 import placeholder from '../image/placeholder.png';
@@ -70,10 +70,19 @@ const ViewSuperAdmin = () => {
   };
 
   const confirmDelete = () => {
-    dispatch(deleteSuperAdmin(adminToDelete._id));
-    setLocalSuperAdmins((prev) => prev.filter((admin) => admin._id !== adminToDelete._id)); // Update local state
-    setDeleteModalVisible(false);
+    dispatch(deleteSuperAdmin(adminToDelete._id))
+      .unwrap()
+      .then(() => {
+        // Remove the deleted admin from the local state
+        setLocalSuperAdmins((prev) => prev.filter((admin) => admin._id !== adminToDelete._id));
+  
+        setDeleteModalVisible(false); // Close the modal after deletion
+      })
+      .catch((error) => {
+        console.error('Failed to delete Super Admin:', error);
+      });
   };
+  
 
   const handleEdit = (admin) => {
     if (!admin || !admin._id) {
@@ -88,11 +97,13 @@ const ViewSuperAdmin = () => {
   const handleSave = async (updatedData) => {
     if (editingSuperAdmin && editingSuperAdmin._id) {
       const response = await dispatch(updateSuperAdmin({ id: editingSuperAdmin._id, superAdminData: updatedData }));
-
+  
       if (response.meta.requestStatus === 'fulfilled') {
+        // Update the local state with the new data
         setLocalSuperAdmins((prev) =>
-          prev.map((admin) => (admin._id === editingSuperAdmin._id ? response.payload : admin)) // Update local state
+          prev.map((admin) => (admin._id === editingSuperAdmin._id ? response.payload : admin))
         );
+  
         setVisible(false); // Close the modal after saving
       } else {
         console.error('Failed to update Super Admin');
@@ -101,52 +112,67 @@ const ViewSuperAdmin = () => {
       console.error('Cannot update super admin without a valid _id');
     }
   };
+  
 
   const handleAddSuperAdmin = async (newAdminData) => {
     const response = await dispatch(addSuperAdmin(newAdminData));
-
+  
     if (response.meta.requestStatus === 'fulfilled') {
-      setLocalSuperAdmins((prev) => [...prev, response.payload]); // Add new admin to local state
+      // Add the newly created super admin to the local state for real-time update
+      setLocalSuperAdmins((prev) => [...prev, response.payload]);
+  
       setVisible(false); // Close the modal after saving
     } else {
       console.error('Failed to add Super Admin');
     }
   };
+  
 
   const handleEditPhoto = (admin) => {
     setSelectedAdminForPhoto(admin);
     setEditPhotoVisible(true);
   };
 
-  const handleSavePhoto = (photo) => {
-    console.log("Saving photo for admin:", selectedAdminForPhoto.name);
-    console.log("Photo file:", photo);
-    setEditPhotoVisible(false);
+  const handleSavePhoto = async (photoFile) => {
+    try {
+      // Ensure the file is selected
+      if (!photoFile) {
+        alert('Please select a photo to upload.');
+        return;
+      }
+  
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+  
+      // Send a PUT request to upload the photo
+      const response = await axios.put(
+        `${API_BASE_URL}/superadmin/${selectedAdminForPhoto._id}/photo`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`, // Include token for authorization
+            'Content-Type': 'multipart/form-data', // Ensure correct content type
+          },
+        }
+      );
+  
+      // Update the local state with the new photo URL returned from the API
+      const updatedPhotoUrl = response.data.photo; // Assuming the API returns the updated photo URL in response.data.photo
+  
+      setLocalSuperAdmins((prevAdmins) =>
+        prevAdmins.map((admin) =>
+          admin._id === selectedAdminForPhoto._id ? { ...admin, photo: updatedPhotoUrl } : admin
+        )
+      );
+  
+      setEditPhotoVisible(false); // Close the modal after saving
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+    }
   };
-
-  const isValidUrl = (url) => {
-    const pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
-      '((([a-z0-9](?=[a-z0-9-]{0,61}[a-z0-9])?)\\.)+[a-z]{2,6})'+ // domain name
-      '|localhost'+ // localhost
-      '|\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}'+ // IP
-      '|([0-9a-f]{1,4}:){7,7}[0-9a-f]{1,4}|'+ // IPv6
-      '([0-9a-f]{1,4}:){1,7}:|'+ // ...
-      '([0-9a-f]{1,4}:){1,6}:[0-9a-f]{1,4}|'+
-      '([0-9a-f]{1,4}:){1,5}(:[0-9a-f]{1,4}){1,2}|'+
-      '([0-9a-f]{1,4}:){1,4}(:[0-9a-f]{1,4}){1,3}|'+
-      '([0-9a-f]{1,4}:){1,3}(:[0-9a-f]{1,4}){1,4}|'+
-      '([0-9a-f]{1,4}:){1,2}(:[0-9a-f]{1,4}){1,5}|'+
-      '[0-9a-f]{1,4}:((:[0-9a-f]{1,4}){1,6})|'+
-      ':((:[0-9a-f]{1,4}){1,7}|:)|'+
-      'fe80:(:[0-9a-f]{0,4}){0,4}%[0-9a-zA-Z]{1,}|'+
-      '::(ffff(:0{1,4}){0,1}:){0,1}'+
-      '((25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))\\.){3}'+
-      '(25[0-5]|(2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9]))'+
-      ')(:\\d+)?(\\/[-a-z0-9%_.~+]*)*'+
-      '(\\?[;&a-z0-9%_.~+=-]*)?'+
-      '(\\#[-a-z0-9_]*)?$','i'); // fragment locator
-    return !!pattern.test(url);
-  };
+  
+  
+  
 
   return (
     <CRow>
@@ -185,7 +211,7 @@ const ViewSuperAdmin = () => {
                       <CTableHeaderCell scope="row">{index + indexOfFirstAdmin + 1}</CTableHeaderCell>
                       <CTableDataCell>
                         <img
-                          src={admin.photo && isValidUrl(admin.photo) ? admin.photo : placeholder}
+                          src={admin.photo ? admin.photo : placeholder}
                           alt="superAdmin"
                           style={{ width: '50px', height: '50px', borderRadius: '50%' }}
                         />
@@ -193,6 +219,7 @@ const ViewSuperAdmin = () => {
                           <CIcon icon={cilPencil} />
                         </CButton>
                       </CTableDataCell>
+
                       <CTableDataCell>{admin.name}</CTableDataCell>
                       <CTableDataCell>{admin.email}</CTableDataCell>
                       <CTableDataCell>{admin.phoneNumber}</CTableDataCell>
