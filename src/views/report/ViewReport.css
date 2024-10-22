@@ -1,0 +1,25 @@
+/* ViewReport.css */
+.table-row {
+    perspective: 1000px; /* Enable 3D effect */
+  }
+  
+  .table-row-inner {
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d; /* Enable 3D space for children */
+  }
+  
+  .table-row:hover .table-row-inner {
+    transform: rotateY(180deg); /* Flip the row on hover */
+  }
+  
+  .table-row-front,
+  .table-row-back {
+    position: absolute;
+    width: 100%;
+    backface-visibility: hidden; /* Hide the back face when not visible */
+  }
+  
+  .table-row-back {
+    transform: rotateY(180deg); /* Rotate back face */
+  }
