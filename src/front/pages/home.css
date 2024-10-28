@@ -1,0 +1,15 @@
+.hover-animation {
+  transition: transform 0.3s ease;
+}
+
+.hover-animation:hover {
+  transform: scale(1.05);
+}
+
+.clients-container img {
+  transition: transform 0.3s;
+}
+
+.clients-container img:hover {
+  transform: scale(1.1);
+}
