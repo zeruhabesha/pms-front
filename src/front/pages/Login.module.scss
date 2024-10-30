@@ -1,0 +1,62 @@
+// Variables
+$primary-color: #007bff;
+$danger-color: #dc3545;
+
+// Container
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+// Card
+.card {
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+// Header
+.card-header {
+  background-color: $primary-color;
+  color: #fff;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+// Body
+.card-body {
+  padding: 2rem;
+}
+
+// Form
+.form-input {
+  margin-bottom: 1rem;
+}
+
+// Button
+.button {
+  width: 100%;
+  margin-top: 1.5rem;
+  background-color: $primary-color;
+  &:disabled {
+    background-color: lighten($primary-color, 20%);
+  }
+}
+
+// Alert
+.alert-danger {
+  background-color: $danger-color;
+  color: #fff;
+  text-align: center;
+}
+
+// Link
+.link {
+  color: $primary-color;
+  &:hover {
+    text-decoration: underline;
+  }
+}

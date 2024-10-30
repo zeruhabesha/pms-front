@@ -1,6 +1,8 @@
+// src/components/AddProperty.js
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { addProperty, updateProperty } from '../../api/actions/PropertyAction';
 import {
-  CButton,
   CModal,
   CModalBody,
   CModalHeader,
@@ -11,10 +13,12 @@ import {
   CFormInput,
   CRow,
   CCol,
+  CButton,
 } from '@coreui/react';
+import './property.scss';
 
 const AddProperty = ({ visible, setVisible, editingProperty }) => {
-  // State for input values based on the property schema
+  const dispatch = useDispatch();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
@@ -26,7 +30,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
   const [amenities, setAmenities] = useState('');
   const [photos, setPhotos] = useState([]);
 
-  // UseEffect to populate fields if editing
+  // Populate form fields if editing an existing property
   useEffect(() => {
     if (editingProperty) {
       setTitle(editingProperty.title);
@@ -44,7 +48,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
     }
   }, [editingProperty]);
 
-  // Function to clear form inputs when adding a new property
+  // Clear form fields for adding a new property
   const clearForm = () => {
     setTitle('');
     setDescription('');
@@ -58,10 +62,9 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
     setPhotos([]);
   };
 
-  // Handle form submission
+  // Handle form submission for adding or updating property
   const handleSubmit = (e) => {
     e.preventDefault();
-    
     const propertyData = {
       title,
       description,
@@ -71,14 +74,14 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
       numberOfUnits,
       propertyType,
       floorPlan,
-      amenities: amenities.split(',').map(amenity => amenity.trim()),
+      amenities: amenities.split(',').map((a) => a.trim()),
       photos,
     };
 
     if (editingProperty) {
-      console.log('Updating property:', { id: editingProperty.id, ...propertyData });
+      dispatch(updateProperty(editingProperty.id, propertyData));
     } else {
-      console.log('Adding new property:', propertyData);
+      dispatch(addProperty(propertyData));
     }
 
     setVisible(false); // Close modal after submission
@@ -96,12 +99,12 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
 
   return (
     <CModal visible={visible} onClose={() => setVisible(false)}>
-      <CModalHeader onClose={() => setVisible(false)}>
+      <CModalHeader>
         <CModalTitle>{editingProperty ? 'Edit Property' : 'Add Property'}</CModalTitle>
       </CModalHeader>
       <CModalBody>
         <CForm onSubmit={handleSubmit}>
-          {/* Title */}
+          {/* Title Field */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyTitle">Title</CFormLabel>
@@ -116,7 +119,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Description */}
+          {/* Description Field */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyDescription">Description</CFormLabel>
@@ -131,7 +134,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Address */}
+          {/* Address Field */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyAddress">Address</CFormLabel>
@@ -146,7 +149,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Price */}
+          {/* Price Field */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyPrice">Price</CFormLabel>
@@ -161,7 +164,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Rent Price (optional) */}
+          {/* Rent Price Field (optional) */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyRentPrice">Rent Price (optional)</CFormLabel>
@@ -175,7 +178,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Number of Units */}
+          {/* Number of Units Field */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyUnits">Number of Units</CFormLabel>
@@ -190,7 +193,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Property Type */}
+          {/* Property Type Field */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyType">Property Type</CFormLabel>
@@ -205,10 +208,10 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Floor Plan (optional) */}
+          {/* Floor Plan URL Field (optional) */}
           <CRow className="mb-3">
             <CCol xs={12}>
-              <CFormLabel htmlFor="propertyFloorPlan">Floor Plan (optional)</CFormLabel>
+              <CFormLabel htmlFor="propertyFloorPlan">Floor Plan URL (optional)</CFormLabel>
               <CFormInput
                 type="text"
                 id="propertyFloorPlan"
@@ -219,24 +222,24 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
             </CCol>
           </CRow>
 
-          {/* Amenities */}
+          {/* Amenities Field */}
           <CRow className="mb-3">
             <CCol xs={12}>
               <CFormLabel htmlFor="propertyAmenities">Amenities (comma-separated)</CFormLabel>
               <CFormInput
                 type="text"
                 id="propertyAmenities"
-                placeholder="e.g., pool, gym, garden"
+                placeholder="e.g., Pool, Gym, Garden"
                 value={amenities}
                 onChange={(e) => setAmenities(e.target.value)}
               />
             </CCol>
           </CRow>
 
-          {/* Photos (file upload, drag and drop, max 5) */}
+          {/* Photos Field (file upload, max 5) */}
           <CRow className="mb-3">
             <CCol xs={12}>
-              <CFormLabel htmlFor="propertyPhotos">Photos (Drag & Drop, max 5)</CFormLabel>
+              <CFormLabel htmlFor="propertyPhotos">Photos (up to 5)</CFormLabel>
               <CFormInput
                 type="file"
                 id="propertyPhotos"

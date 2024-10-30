@@ -22,29 +22,30 @@ import {
 import CIcon from '@coreui/icons-react';
 import { cilUser, cilEnvelopeClosed, cilLockLocked, cilPhone, cilLocationPin, cilBadge } from '@coreui/icons';
 import { useNavigate } from 'react-router-dom';
-// import AuthService from '../../api/services/auth.services'; // Ensure correct import path
 
-const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin, onSave }) => {
+const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // Initialize state with fallback values using optional chaining
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
-  const [status, setStatus] = useState('Active');
+  const [status, setStatus] = useState('active');
   const [errorMessage, setErrorMessage] = useState('');
   const { error } = useSelector((state) => state.superAdmin);
 
   useEffect(() => {
+    // Reset form fields each time editingSuperAdmin changes
     if (editingSuperAdmin) {
       setName(editingSuperAdmin.name || '');
       setEmail(editingSuperAdmin.email || '');
-      setPassword(''); // Leave password blank for security
+      setPassword(editingSuperAdmin.password || '');
       setPhoneNumber(editingSuperAdmin.phoneNumber || '');
       setAddress(editingSuperAdmin.address || '');
-      setStatus(editingSuperAdmin.status === 'inactive' ? 'Inactive' : 'Active');
-      setErrorMessage('');
+      setStatus(editingSuperAdmin.status === 'inactive' ? 'inactive' : 'active');
     } else {
       setName('');
       setEmail('');
@@ -52,9 +53,10 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin, onSave }) => {
       setPhoneNumber('');
       setAddress('');
       setStatus('Active');
-      setErrorMessage('');
     }
+    setErrorMessage('');
   }, [editingSuperAdmin]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -65,12 +67,6 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin, onSave }) => {
       return;
     }
 
-    // Check authentication
-    // if (!AuthService.isAuthenticated()) {
-    //   setErrorMessage('You must be logged in to perform this action.');
-    //   return;
-    // }
-
     const formData = {
       name,
       email,
@@ -79,6 +75,7 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin, onSave }) => {
       address,
       photo: '',
       status: status.toLowerCase(),
+      ...(editingSuperAdmin ? { id: editingSuperAdmin.id } : {}),
     };
 
     try {
@@ -88,6 +85,7 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin, onSave }) => {
       setErrorMessage(error.message || 'An error occurred while saving');
     }
   };
+
 
   const handleClose = () => {
     setName('');
@@ -209,8 +207,8 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin, onSave }) => {
                       onChange={(e) => setStatus(e.target.value)}
                       required
                     >
-                      <option value="Active">Active</option>
-                      <option value="Inactive">Inactive</option>
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
                     </CFormSelect>
                   </CInputGroup>
                 </CCol>

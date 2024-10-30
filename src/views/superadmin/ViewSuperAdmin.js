@@ -25,14 +25,12 @@ const ViewSuperAdmin = () => {
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [editingSuperAdmin, setEditingSuperAdmin] = useState(null);
   const [adminToEdit, setAdminToEdit] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(''); // Define error message state
+  const [errorMessage, setErrorMessage] = useState('');
   const itemsPerPage = 5;
-
 
   useEffect(() => {
     dispatch(fetchSuperAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
   }, [dispatch, currentPage, searchTerm]);
-
 
   const handlePageChange = (page) => {
     if (page !== currentPage) {
@@ -95,12 +93,11 @@ const ViewSuperAdmin = () => {
     }
   };
 
-
   const handleAddSuperAdmin = async (superAdminData) => {
     try {
       const result = await dispatch(addSuperAdmin(superAdminData)).unwrap();
       toast.success('Super Admin added successfully');
-      setVisible(false);
+      setSuperAdminModalVisible(false);
       return result;
     } catch (error) {
       const errorMessage = error?.message || 'Failed to add Super Admin';
@@ -139,7 +136,7 @@ const ViewSuperAdmin = () => {
                 {error.message}
               </CAlert>
             )}
-            {errorMessage && ( // Display error from state
+            {errorMessage && (
               <CAlert color="danger" className="mb-4">
                 {errorMessage}
               </CAlert>
@@ -161,13 +158,15 @@ const ViewSuperAdmin = () => {
           </CCardBody>
         </CCard>
       </CCol>
-      <SuperAdminModal
-        visible={superAdminModalVisible}
-        setVisible={setSuperAdminModalVisible}
-        editingSuperAdmin={editingSuperAdmin}
-        handleSave={handleSave}
-        handleAddSuperAdmin={handleAddSuperAdmin}
-      />
+      {superAdminModalVisible && (
+        <SuperAdminModal
+          visible={superAdminModalVisible}
+          setVisible={setSuperAdminModalVisible}
+          editingSuperAdmin={editingSuperAdmin}
+          handleSave={handleSave}
+          handleAddSuperAdmin={handleAddSuperAdmin}
+        />
+      )}
       <SuperAdminDeleteModal
         visible={deleteModalVisible}
         setDeleteModalVisible={setDeleteModalVisible}

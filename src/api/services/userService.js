@@ -1,8 +1,50 @@
+// import httpCommon from '../http-common';
+
+// class UserService {
+//   constructor() {
+//     this.baseURL = `${httpCommon.defaults.baseURL}/users/user`;
+//   }
+
+//   getAuthHeader() {
+//     const token = localStorage.getItem('token');
+//     return {
+//       Authorization: `Bearer ${token}`,
+//     };
+//   }
+
+//   getUsers(page, limit, search) {
+//     return httpCommon.get(`${this.baseURL}?page=${page}&limit=${limit}&search=${search}`, {
+//       headers: this.getAuthHeader(),
+//     });
+//   }
+
+//   addUser(userData) {
+//     return httpCommon.post(this.baseURL, userData, {
+//       headers: this.getAuthHeader(),
+//     });
+//   }
+
+//   deleteUser(id) {
+//     return httpCommon.delete(`${this.baseURL}/${id}`, {
+//       headers: this.getAuthHeader(),
+//     });
+//   }
+
+//   updateUser(id, userData) {
+//     return httpCommon.put(`${this.baseURL}/${id}`, userData, {
+//       headers: this.getAuthHeader(),
+//     });
+//   }
+// }
+
+// export default new UserService();
+
+
 import axios from 'axios';
 import httpCommon from '../http-common';
 import AuthService from './auth.services'; // Import AuthService here
 
-class SuperAdminService {
+class SuperUser {
   constructor() {
     this.baseURL = `${httpCommon.defaults.baseURL}/users`; // Use httpCommon.defaults.baseURL
   }
@@ -14,9 +56,9 @@ class SuperAdminService {
     };
   }
 
-  async fetchSuperAdmins(page = 1, limit = 5, searchTerm = '') {
+  async getUsers(page = 1, limit = 5, searchTerm = '') {
     try {
-      const response = await httpCommon.get(`/users/super-admin`, {
+      const response = await httpCommon.get(`/users/user`, {
         headers: this.getAuthHeader(),
         params: { page, limit, search: searchTerm },
       });
@@ -31,7 +73,7 @@ class SuperAdminService {
     }
   }
   
-  async addSuperAdmin(superAdminData) {
+  async addUser(superAdminData) {
     try {
       // Check if user is authenticated
       // if (!AuthService.isAuthenticated()) {
@@ -44,7 +86,7 @@ class SuperAdminService {
     
       
       // Make the API call to add Super Admin
-      const response = await httpCommon.post('/users/superadmin', superAdminData, {
+      const response = await httpCommon.post('/users/user', superAdminData, {
         headers: {
           ...this.getAuthHeader(),
           'Content-Type': 'application/json',
@@ -61,7 +103,7 @@ class SuperAdminService {
     }
   }
 
-  async updateSuperAdmin(id, superAdminData) {
+  async updateUser(id, superAdminData) {
     if (!superAdminData) {
       throw new Error("No data provided for update");
     }
@@ -92,7 +134,7 @@ class SuperAdminService {
     }
   }
 
-  async uploadSuperAdminPhoto(id, photoFile) {
+  async uploadUserPhoto(id, photoFile) {
     try {
       const formData = new FormData();
       formData.append('photo', photoFile);
@@ -116,7 +158,7 @@ class SuperAdminService {
     };
   }
 
-  async deleteSuperAdmin(id) {
+  async deleteUser(id) {
     try {
       await httpCommon.delete(`/users/${id}`, {
         headers: this.getAuthHeader(),
@@ -135,4 +177,4 @@ class SuperAdminService {
   }
 }
 
-export default new SuperAdminService();
+export default new SuperUser();

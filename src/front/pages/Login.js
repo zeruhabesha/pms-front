@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -18,6 +18,7 @@ import Footer from '../components/Footer';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { login } from '../../api/actions/authActions';
+import styles from './Login.module.scss';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -33,16 +34,15 @@ const Login = () => {
     const errors = {};
     if (!email) errors.email = 'Email is required';
     if (!password) errors.password = 'Password is required';
-  
+
     if (Object.keys(errors).length > 0) {
       setErrors(errors);
     } else {
       setErrors({});
       try {
         const result = await dispatch(login({ email, password })).unwrap();
-        console.log('Login Result:', result); // Log for debugging
         toast.success('Login successful!', { autoClose: 2000, position: 'top-right' });
-  
+
         if (result.token) {
           navigate('/dashboard', { replace: true });
         } else {
@@ -50,22 +50,19 @@ const Login = () => {
         }
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'An error occurred during login';
-        console.error('Login Error:', errorMessage);
         setErrors({ general: errorMessage });
         toast.error(errorMessage, { autoClose: 3000, position: 'top-right' });
       }
     }
   };
-  
 
   return (
     <div>
       <Navbar />
-      <CContainer className="d-flex justify-content-center align-items-center min-vh-100">
-        <CCard className="w-100" style={{ maxWidth: '400px' }}>
-          <CCardHeader>
+      <CContainer className={styles.container}>
+        <CCard className={styles.card}>
+          <CCardHeader className={styles.cardHeader}>
             <motion.h1
-              className="text-center"
               initial={{ opacity: 0, y: -50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -73,9 +70,9 @@ const Login = () => {
               Login
             </motion.h1>
           </CCardHeader>
-          <CCardBody>
+          <CCardBody className={styles.cardBody}>
             <CForm onSubmit={handleSubmit}>
-              <div className="mb-3">
+              <div className={styles.formInput}>
                 <CFormLabel htmlFor="email">Email</CFormLabel>
                 <CFormInput
                   type="email"
@@ -85,10 +82,10 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   invalid={!!errors.email}
                 />
-                {errors.email && <CAlert color="danger">{errors.email}</CAlert>}
+                {errors.email && <CAlert color="danger" className={styles.alertDanger}>{errors.email}</CAlert>}
               </div>
 
-              <div className="mb-3">
+              <div className={styles.formInput}>
                 <CFormLabel htmlFor="password">Password</CFormLabel>
                 <CFormInput
                   type="password"
@@ -98,11 +95,11 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   invalid={!!errors.password}
                 />
-                {errors.password && <CAlert color="danger">{errors.password}</CAlert>}
+                {errors.password && <CAlert color="danger" className={styles.alertDanger}>{errors.password}</CAlert>}
               </div>
 
               {errors.general && (
-                <CAlert color="danger" className="text-center">
+                <CAlert color="danger" className={styles.alertDanger}>
                   {errors.general}
                 </CAlert>
               )}
@@ -112,14 +109,14 @@ const Login = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <CButton type="submit" color="primary" block className="mt-3" disabled={loading}>
+                <CButton type="submit" color="primary" className={styles.button} disabled={loading}>
                   {loading ? 'Logging in...' : 'Login'}
                 </CButton>
               </motion.div>
             </CForm>
             <p className="mt-4 text-center">
               Don&apos;t have an account?{' '}
-              <a href="/register" className="text-primary">
+              <a href="/register" className={styles.link}>
                 Register
               </a>
             </p>
