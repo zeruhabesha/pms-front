@@ -15,7 +15,6 @@ import {
   CCol,
   CButton,
 } from '@coreui/react';
-import './property.scss';
 
 const AddProperty = ({ visible, setVisible, editingProperty }) => {
   const dispatch = useDispatch();
