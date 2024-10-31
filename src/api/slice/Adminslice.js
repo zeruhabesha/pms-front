@@ -1,45 +1,108 @@
-// api/slice/Adminslice.js
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchAdmins, addAdmin, updateAdmin, deleteAdmin } from '../actions/AdminAction';
+import { fetchAdmins, addAdmin, updateAdmin, uploadAdminPhoto, deleteAdmin } from '../actions/AdminActions';
 
-const adminSlice = createSlice({
-  name: 'admin',
-  initialState: {
-    admins: [],
-    loading: false,
-    error: null,
-  },
+
+const initialState = {
+  Admins: [],
+  loading: false,
+  error: null,
+  totalPages: 1,
+  currentPage: 1,
+  selectedAdmin: null,
+};
+
+const AdminSlice = createSlice({
+  name: 'Admin',
+  initialState,
   reducers: {
-    setAdmins: (state, action) => {
-      state.admins = action.payload;
+    resetState: () => initialState,
+    setSelectedAdmin: (state, action) => {
+      state.selectedAdmin = action.payload;
+    },
+    clearError: (state) => {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
+      // Fetch  Admins
       .addCase(fetchAdmins.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchAdmins.fulfilled, (state, action) => {
+        state.Admins = action.payload.users;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.currentPage;
         state.loading = false;
-        state.admins = action.payload.users;
       })
       .addCase(fetchAdmins.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || 'Failed to fetch  admins';
+      })
+
+      // Add  Admin
+      .addCase(addAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
       .addCase(addAdmin.fulfilled, (state, action) => {
-        state.admins.push(action.payload);
+        state.loading = false;
+        state.Admins.push(action.payload);
       })
+      .addCase(addAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+  
+
+      // Update  Admin case in the extraReducers
       .addCase(updateAdmin.fulfilled, (state, action) => {
-        const index = state.admins.findIndex((admin) => admin.id === action.payload.id);
-        if (index !== -1) state.admins[index] = action.payload;
+        state.loading = false;
+        // Find the index of the updated admin
+        const index = state.Admins.findIndex(admin => admin._id === action.payload._id);
+        
+        if (index !== -1) {
+          // Replace the old entry with the new data
+          state.Admins[index] = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(updateAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'An error occurred';
+      })
+
+      // Upload Photo
+      .addCase(uploadAdminPhoto.fulfilled, (state, action) => {
+        const { id, photoUrl } = action.payload;
+        const admin = state.Admins.find((admin) => admin._id === id);
+        if (admin) {
+          admin.photoUrl = photoUrl;
+        }
+      })
+      .addCase(uploadAdminPhoto.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to upload photo';
+      })
+
+      // Delete  Admin
+      .addCase(deleteAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
       })
       .addCase(deleteAdmin.fulfilled, (state, action) => {
-        state.admins = state.admins.filter((admin) => admin.id !== action.payload);
+        state.loading = false;
+        state.Admins = state.Admins.filter(
+          (admin) => admin._id !== action.payload
+        );
+        state.error = null;
+      })
+      .addCase(deleteAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'An error occurred';
       });
   },
 });
 
-export const { setAdmins } = adminSlice.actions;
-export default adminSlice.reducer;
+export const { resetState, setSelectedAdmin, clearError } = AdminSlice.actions;
+export default AdminSlice.reducer;

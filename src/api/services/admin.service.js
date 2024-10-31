@@ -1,9 +1,10 @@
-// api/services/admin.service.js
+import axios from 'axios';
 import httpCommon from '../http-common';
+import AuthService from './auth.services'; // Import AuthService here
 
 class AdminService {
   constructor() {
-    this.baseURL = `${httpCommon.defaults.baseURL}/users`;
+    this.baseURL = `${httpCommon.defaults.baseURL}/users`; // Use httpCommon.defaults.baseURL
   }
 
   getAuthHeader() {
@@ -15,39 +16,66 @@ class AdminService {
 
   async fetchAdmins(page = 1, limit = 5, searchTerm = '') {
     try {
-      const response = await httpCommon.get(`${this.baseURL}/admin`, {
+      const response = await httpCommon.get(`/users/admin`, {
         headers: this.getAuthHeader(),
         params: { page, limit, search: searchTerm },
       });
-      return response.data?.data || { users: [], totalPages: 1, totalUsers: 0, currentPage: page };
+      return {
+        users: response.data?.data?.users || [],
+        totalPages: response.data?.data?.totalPages || 1,
+        totalUsers: response.data?.data?.totalUsers || 0,
+        currentPage: response.data?.data?.currentPage || page,
+      };
     } catch (error) {
       throw this.handleError(error);
     }
   }
-
-  async addAdmin(adminData) {
+  
+  async addAdmin(AdminData) {
     try {
-      const response = await httpCommon.post(`${this.baseURL}/admin`, adminData, {
+      
+      // Make the API call to add Admin
+      const response = await httpCommon.post('/users/admin', AdminData, {
         headers: {
           ...this.getAuthHeader(),
           'Content-Type': 'application/json',
         },
-      });
+      })
       return response.data?.data;
     } catch (error) {
-      console.error('Admin Service Error:', error.response?.data || error);
-      throw this.handleError(error);
+      // Throw an error with meaningful message and status
+      throw {
+        message: error.response?.data?.message || error.message || 'An error occurred',
+        status: error.response?.status || 500,
+        isAuthError: error.response?.status === 401,
+      };
     }
   }
 
-  async updateAdmin(id, adminData) {
+  async updateAdmin(id, AdminData) {
+    if (!AdminData) {
+      throw new Error("No data provided for update");
+    }
+  
     try {
-      const response = await httpCommon.put(`${this.baseURL}/${id}`, adminData, {
+      const payload = {
+        name: AdminData.name,
+        email: AdminData.email,
+        phoneNumber: AdminData.phoneNumber,
+        status: AdminData.status || 'active',
+      };
+  
+      const response = await httpCommon.put(`/users/${id}`, payload, {
         headers: {
           ...this.getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
+  
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+  
       return response.data?.data;
     } catch (error) {
       console.error('Admin Update Error:', error.response?.data || error);
@@ -55,14 +83,19 @@ class AdminService {
     }
   }
 
-  async deleteAdmin(id) {
+  async uploadAdminPhoto(id, photoFile) {
     try {
-      await httpCommon.delete(`${this.baseURL}/${id}`, {
-        headers: this.getAuthHeader(),
+      const formData = new FormData();
+      formData.append('photo', photoFile);
+
+      const response = await httpCommon.post(`/users/${id}/photo`, formData, {
+        headers: {
+          ...this.getAuthHeader(),
+          'Content-Type': 'multipart/form-data',
+        },
       });
-      return id;
+      return response.data?.photoUrl;
     } catch (error) {
-      console.error('Admin Delete Error:', error.response?.data || error);
       throw this.handleError(error);
     }
   }
@@ -70,7 +103,25 @@ class AdminService {
   handleError(error) {
     return {
       message: error.response?.data?.message || error.message,
-      status: error.response?.status || 500,
+      status: error.response?.status,
+    };
+  }
+
+  async deleteAdmin(id) {
+    try {
+      await httpCommon.delete(`/users/${id}`, {
+        headers: this.getAuthHeader(),
+      });
+      return id;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  handleError(error) {
+    return {
+      message: error.response?.data?.message || error.message,
+      status: error.response?.status,
     };
   }
 }

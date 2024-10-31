@@ -33,15 +33,6 @@ class SuperAdminService {
   
   async addSuperAdmin(superAdminData) {
     try {
-      // Check if user is authenticated
-      // if (!AuthService.isAuthenticated()) {
-      //   throw {
-      //     message: 'Not authenticated',
-      //     status: 401,
-      //     isAuthError: true,
-      //   };
-      // }
-    
       
       // Make the API call to add Super Admin
       const response = await httpCommon.post('/users/superadmin', superAdminData, {

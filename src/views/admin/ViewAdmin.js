@@ -1,44 +1,86 @@
-// ViewAdmin.js
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAdmins, deleteAdmin } from '../../api/actions/AdminAction';
+import { fetchAdmins, deleteAdmin, addAdmin, updateAdmin } from '../../api/actions/AdminActions';
 import AddAdmin from './AddAdmin';
+import AdminTable from './AdminTable';
 import EditPhotoModal from '../EditPhotoModal';
-import placeholder from '../image/placeholder.png';
+import AdminDeleteModal from './AdminDeleteModal';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import {
-  CRow, CButton, CCard, CCardBody, CCardHeader, CCol,
-  CTable, CTableBody, CTableHead, CTableHeaderCell,
-  CTableRow, CTableDataCell, CFormInput,
+  CRow, CCol, CCard, CCardBody, CCardHeader, CAlert, CButton
 } from '@coreui/react';
-import { CIcon } from '@coreui/icons-react';
-import { cilPencil, cilTrash } from '@coreui/icons';
 
 const ViewAdmin = () => {
   const dispatch = useDispatch();
-  const admins = useSelector((state) => state.admin?.admins || []);
+  const { admins = [], loading = false, error = null, totalPages = 0, currentPage = 1 } = useSelector((state) => state.admin || {});
 
   const [visible, setVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [editPhotoVisible, setEditPhotoVisible] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState(null);
   const [editingAdmin, setEditingAdmin] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [editPhotoVisible, setEditPhotoVisible] = useState(false);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    dispatch(fetchAdmins({ page: currentPage, limit: itemsPerPage, searchTerm }));
+    dispatch(fetchAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
   }, [dispatch, currentPage, searchTerm]);
+
+  const handlePageChange = (page) => {
+    if (page !== currentPage) {
+      dispatch(fetchAdmins({ page, limit: itemsPerPage, search: searchTerm }));
+    }
+  };
 
   const handleEdit = (admin) => {
     setEditingAdmin(admin);
     setVisible(true);
   };
 
-  const handleEditPhoto = () => {
+  const handleEditPhoto = (admin) => {
+    setEditingAdmin(admin);
     setEditPhotoVisible(true);
   };
 
-  const handleDelete = (id) => {
-    dispatch(deleteAdmin(id));
+  const handleDelete = (admin) => {
+    setAdminToDelete(admin);
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await dispatch(deleteAdmin(adminToDelete.id)).unwrap();
+      dispatch(fetchAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+      setDeleteModalVisible(false);
+      toast.success('Admin deleted successfully');
+    } catch (error) {
+      toast.error('Failed to delete Admin');
+      console.error('Failed to delete Admin:', error);
+    }
+  };
+
+  const handleAddAdmin = async (adminData) => {
+    try {
+      await dispatch(addAdmin(adminData)).unwrap();
+      toast.success('Admin added successfully');
+      setVisible(false);
+    } catch (error) {
+      toast.error(error?.message || 'Failed to add Admin');
+    }
+  };
+
+  const handleSaveAdmin = async (updatedData) => {
+    try {
+      await dispatch(updateAdmin({ id: editingAdmin.id, adminData: updatedData })).unwrap();
+      dispatch(fetchAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+      setVisible(false);
+      toast.success('Admin updated successfully');
+    } catch (error) {
+      toast.error('Failed to update Admin');
+      console.error('Failed to update Admin:', error);
+    }
   };
 
   return (
@@ -46,64 +88,51 @@ const ViewAdmin = () => {
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
-            <strong>Admin</strong>
-            <div>
-              <CButton onClick={() => setVisible(true)}>Add Admin</CButton>
-            </div>
+            <strong>Admin Management</strong>
+            <CButton color="primary" onClick={() => setVisible(true)}>
+              Add Admin
+            </CButton>
           </CCardHeader>
           <CCardBody>
-            <CFormInput
-              type="text"
-              placeholder="Search by name or email"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mb-3"
+            {error && (
+              <CAlert color="danger" className="mb-4">
+                {error.message}
+              </CAlert>
+            )}
+            <AdminTable
+              admins={admins}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              handleEdit={handleEdit}
+              handleDelete={handleDelete}
+              handleEditPhoto={handleEditPhoto}
+              handlePageChange={handlePageChange}
             />
-            <div className="table-responsive">
-              <CTable>
-                <CTableHead color="light">
-                  <CTableRow>
-                    <CTableHeaderCell>#</CTableHeaderCell>
-                    <CTableHeaderCell>Photo</CTableHeaderCell>
-                    <CTableHeaderCell>Name</CTableHeaderCell>
-                    <CTableHeaderCell>Email</CTableHeaderCell>
-                    <CTableHeaderCell>Role</CTableHeaderCell>
-                    <CTableHeaderCell>Status</CTableHeaderCell>
-                    <CTableHeaderCell>Action</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {admins.map((admin, index) => (
-                    <CTableRow key={admin.id}>
-                      <CTableHeaderCell scope="row">{index + 1}</CTableHeaderCell>
-                      <CTableDataCell>
-                        <img src={placeholder} alt="Admin" style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
-                        <CButton color="secondary" size="sm" className="ms-2" title="Edit Photo" onClick={handleEditPhoto}>
-                          <CIcon icon={cilPencil} />
-                        </CButton>
-                      </CTableDataCell>
-                      <CTableDataCell>{admin.name}</CTableDataCell>
-                      <CTableDataCell>{admin.email}</CTableDataCell>
-                      <CTableDataCell>{admin.role}</CTableDataCell>
-                      <CTableDataCell>{admin.status}</CTableDataCell>
-                      <CTableDataCell>
-                        <CButton color="dark" size="sm" className="me-2" onClick={() => handleEdit(admin)}>
-                          <CIcon icon={cilPencil} />
-                        </CButton>
-                        <CButton color="danger" size="sm" onClick={() => handleDelete(admin.id)}>
-                          <CIcon icon={cilTrash} />
-                        </CButton>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
-            </div>
           </CCardBody>
         </CCard>
       </CCol>
-      <AddAdmin visible={visible} setVisible={setVisible} editingAdmin={editingAdmin} />
-      <EditPhotoModal visible={editPhotoVisible} setVisible={setEditPhotoVisible} />
+
+      {/* Modals */}
+      <AddAdmin
+        visible={visible}
+        setVisible={setVisible}
+        editingAdmin={editingAdmin}
+        onSave={editingAdmin ? handleSaveAdmin : handleAddAdmin}
+      />
+      <AdminDeleteModal
+        visible={deleteModalVisible}
+        setDeleteModalVisible={setDeleteModalVisible}
+        adminToDelete={adminToDelete}
+        confirmDelete={confirmDelete}
+      />
+      <EditPhotoModal
+        visible={editPhotoVisible}
+        setVisible={setEditPhotoVisible}
+        admin={editingAdmin}
+      />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </CRow>
   );
 };

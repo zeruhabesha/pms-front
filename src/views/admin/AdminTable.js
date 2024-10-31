@@ -15,8 +15,8 @@ import { CIcon } from '@coreui/icons-react';
 import { cilPencil, cilTrash, cilCheckCircle, cilXCircle } from '@coreui/icons';
 import placeholder from '../image/placeholder.png';
 
-const SuperAdminTable = ({
-  superAdmins = [],
+const AdminTable = ({
+  admins = [],
   currentPage,
   totalPages,
   searchTerm,
@@ -30,7 +30,7 @@ const SuperAdminTable = ({
     <div>
       <CFormInput
         type="text"
-        placeholder="Search by name, email, or phone number"
+        placeholder="Search by name, email, or role"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         className="mb-3"
@@ -43,26 +43,26 @@ const SuperAdminTable = ({
               <CTableHeaderCell>Photo</CTableHeaderCell>
               <CTableHeaderCell>Name</CTableHeaderCell>
               <CTableHeaderCell>Email</CTableHeaderCell>
-              <CTableHeaderCell>Phone Number</CTableHeaderCell>
+              <CTableHeaderCell>Role</CTableHeaderCell>
               <CTableHeaderCell>Status</CTableHeaderCell>
               <CTableHeaderCell>Actions</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {superAdmins.length === 0 ? (
+            {admins.length === 0 ? (
               <CTableRow>
                 <CTableDataCell colSpan="7" className="text-center">
                   No data available
                 </CTableDataCell>
               </CTableRow>
             ) : (
-              superAdmins.map((admin, index) => (
+              admins.map((admin, index) => (
                 <CTableRow key={admin?._id || index}>
                   <CTableDataCell>{(currentPage - 1) * 5 + index + 1}</CTableDataCell>
                   <CTableDataCell>
                     <img
-                      src={admin?.photo ? `http://localhost:4000/api/v1/users/${admin._id}/photo` : placeholder}
-                      alt="User"
+                      src={admin?.photo || placeholder}
+                      alt="Admin"
                       style={{ width: '50px', height: '50px', borderRadius: '50%' }}
                       className="me-2"
                     />
@@ -72,7 +72,7 @@ const SuperAdminTable = ({
                   </CTableDataCell>
                   <CTableDataCell>{admin?.name || 'N/A'}</CTableDataCell>
                   <CTableDataCell>{admin?.email || 'N/A'}</CTableDataCell>
-                  <CTableDataCell>{admin?.phoneNumber || 'N/A'}</CTableDataCell>
+                  <CTableDataCell>{admin?.role || 'N/A'}</CTableDataCell>
                   <CTableDataCell>
                     {admin?.status?.toLowerCase() === 'active' ? (
                       <CIcon icon={cilCheckCircle} className="text-success" title="Active" />
@@ -95,7 +95,7 @@ const SuperAdminTable = ({
         </CTable>
       </div>
 
-      <CPagination className="mt-3">
+      <CPagination className="mt-3 justify-content-center">
         <CPaginationItem disabled={currentPage === 1} onClick={() => handlePageChange(1)}>
           &laquo;
         </CPaginationItem>
@@ -122,4 +122,4 @@ const SuperAdminTable = ({
   );
 };
 
-export default SuperAdminTable;
+export default AdminTable;

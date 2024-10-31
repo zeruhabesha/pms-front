@@ -1,12 +1,17 @@
-// EditPhotoModal.js
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton, CFormInput } from '@coreui/react';
 import placeholder from '../image/placeholder.png';
 
 const EditPhotoModal = ({ visible, setVisible, admin, onSavePhoto, isLoading, error }) => {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(admin?.photoUrl || placeholder);
+  const [previewUrl, setPreviewUrl] = useState(placeholder);
+
+  useEffect(() => {
+    // Set the preview to the current admin photo if it exists, or to the placeholder
+    setPreviewUrl(admin?.photo ? `http://localhost:4000/api/v1/users/${admin._id}/photo` : placeholder);
+    setSelectedFile(null); // Reset selected file when admin changes
+  }, [admin]);
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -33,7 +38,7 @@ const EditPhotoModal = ({ visible, setVisible, admin, onSavePhoto, isLoading, er
         <CModalTitle>Edit Photo</CModalTitle>
       </CModalHeader>
       <CModalBody className="text-center">
-        <img src={previewUrl} alt="Admin" style={{ width: '150px', height: '150px', borderRadius: '50%', marginBottom: '20px' }} />
+        <img src={previewUrl} className="me-2"  alt="Admin" style={{ width: '150px', height: '150px', borderRadius: '50%', marginBottom: '20px' }} />
         <CButton color="primary" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
           Select Photo
         </CButton>
