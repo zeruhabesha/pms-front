@@ -3,7 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy-loaded components
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'));
-const Superadmin = React.lazy(() => import('./views/superadmin/SuperAdmin'));
+const SuperAdmin = React.lazy(() => import('./views/superadmin/SuperAdmin'));
 const Admin = React.lazy(() => import('./views/admin/Admin'));
 const User = React.lazy(() => import('./views/users/User'));
 const Agreement = React.lazy(() => import('./views/agreement/Agreement'));
@@ -24,7 +24,7 @@ const routes = [
 
   // Protected routes (requires authentication)
   { path: '/dashboard', name: 'Dashboard', element: () => <ProtectedRoute element={Dashboard} /> },
-  { path: '/account/superadmin', name: 'Super Admin', element: () => <ProtectedRoute element={Superadmin} /> },
+  { path: '/account/superadmin', name: 'Super Admin', element: () => <ProtectedRoute element={SuperAdmin} /> },
   { path: '/account/admin', name: 'Admin', element: () => <ProtectedRoute element={Admin} /> },
   { path: '/account/users', name: 'Users', element: () => <ProtectedRoute element={User} /> },
   { path: '/agreement', name: 'Agreement', element: () => <ProtectedRoute element={Agreement} /> },

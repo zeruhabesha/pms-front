@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -33,16 +33,15 @@ const Login = () => {
     const errors = {};
     if (!email) errors.email = 'Email is required';
     if (!password) errors.password = 'Password is required';
-  
+
     if (Object.keys(errors).length > 0) {
       setErrors(errors);
     } else {
       setErrors({});
       try {
         const result = await dispatch(login({ email, password })).unwrap();
-        console.log('Login Result:', result); // Log for debugging
         toast.success('Login successful!', { autoClose: 2000, position: 'top-right' });
-  
+
         if (result.token) {
           navigate('/dashboard', { replace: true });
         } else {
@@ -50,22 +49,19 @@ const Login = () => {
         }
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'An error occurred during login';
-        console.error('Login Error:', errorMessage);
         setErrors({ general: errorMessage });
         toast.error(errorMessage, { autoClose: 3000, position: 'top-right' });
       }
     }
   };
-  
 
   return (
     <div>
       <Navbar />
-      <CContainer className="d-flex justify-content-center align-items-center min-vh-100">
-        <CCard className="w-100" style={{ maxWidth: '400px' }}>
+      <CContainer>
+        <CCard>
           <CCardHeader>
             <motion.h1
-              className="text-center"
               initial={{ opacity: 0, y: -50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -75,7 +71,7 @@ const Login = () => {
           </CCardHeader>
           <CCardBody>
             <CForm onSubmit={handleSubmit}>
-              <div className="mb-3">
+              <div>
                 <CFormLabel htmlFor="email">Email</CFormLabel>
                 <CFormInput
                   type="email"
@@ -88,7 +84,7 @@ const Login = () => {
                 {errors.email && <CAlert color="danger">{errors.email}</CAlert>}
               </div>
 
-              <div className="mb-3">
+              <div>
                 <CFormLabel htmlFor="password">Password</CFormLabel>
                 <CFormInput
                   type="password"
@@ -102,9 +98,7 @@ const Login = () => {
               </div>
 
               {errors.general && (
-                <CAlert color="danger" className="text-center">
-                  {errors.general}
-                </CAlert>
+                <CAlert color="danger">{errors.general}</CAlert>
               )}
 
               <motion.div
@@ -112,16 +106,14 @@ const Login = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                <CButton type="submit" color="primary" block className="mt-3" disabled={loading}>
+                <CButton type="submit" color="primary" disabled={loading}>
                   {loading ? 'Logging in...' : 'Login'}
                 </CButton>
               </motion.div>
             </CForm>
             <p className="mt-4 text-center">
               Don&apos;t have an account?{' '}
-              <a href="/register" className="text-primary">
-                Register
-              </a>
+              <a href="/register">Register</a>
             </p>
           </CCardBody>
         </CCard>

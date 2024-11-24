@@ -1,163 +1,228 @@
-import React, { useEffect, useState } from 'react';
-import {
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
-  CModalFooter,
-  CButton,
-  CForm,
-  CFormInput,
-  CFormLabel,
-  CRow,
+import React, { useState, useEffect } from 'react';
+import { 
+  CButton, 
+  CModal, 
+  CModalBody, 
+  CModalHeader, 
+  CModalTitle, 
+  CModalFooter, 
+  CForm, 
+  CFormInput, 
+  CRow, 
   CCol,
-  CFormSelect, // Import CFormSelect for dropdowns
+  CCard,
+  CCardBody,
+  CInputGroup,
+  CFormSelect,
+  CAlert,
 } from '@coreui/react';
+import { useDispatch } from 'react-redux';
+import { addUser, updateUser } from '../../api/actions/userActions';
+import CustomSwitch from './CustomSwitch';
 
 const AddUser = ({ visible, setVisible, editingUser }) => {
-  // State for input values
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [role, setRole] = useState('User'); // Default role
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [address, setAddress] = useState('');
-  const [status, setStatus] = useState('Active'); // Default status
-  const [photo, setPhoto] = useState('');
+  const dispatch = useDispatch();
 
-  // Use effect to populate fields if editing
+  const [userData, setUserData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'User', // Set a valid default role according to your schema
+    phoneNumber: '',
+    address: '',
+    status: true,
+    photo: '',
+    activeStart: '',
+    activeEnd: '',
+  });
+  
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     if (editingUser) {
-      setName(editingUser.name);
-      setEmail(editingUser.email);
-      setRole(editingUser.role);
-      setPhoneNumber(editingUser.phoneNumber);
-      setAddress(editingUser.address);
-      setStatus(editingUser.status);
-      setPhoto(editingUser.photo);
+      setUserData({
+        name: editingUser.name || '',
+        email: editingUser.email || '',
+        password: '', // Clear password field for editing
+        role: editingUser.role || 'User',
+        phoneNumber: editingUser.phoneNumber || '',
+        address: editingUser.address || '',
+        status: editingUser.status === 'active',
+        photo: editingUser.photo || '',
+        activeStart: editingUser.activeStart ? editingUser.activeStart.split('T')[0] : '',
+        activeEnd: editingUser.activeEnd ? editingUser.activeEnd.split('T')[0] : '',
+      });
     } else {
-      setName('');
-      setEmail('');
-      setRole('User');
-      setPhoneNumber('');
-      setAddress('');
-      setStatus('Active');
-      setPhoto('');
+      setUserData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'User',
+        phoneNumber: '',
+        address: '',
+        status: true,
+        photo: '',
+        activeStart: '',
+        activeEnd: '',
+      });
     }
+    setErrorMessage('');
   }, [editingUser]);
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleStatusChange = (checked) => {
+    setUserData((prev) => ({ ...prev, status: checked }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle submission logic here (e.g., API call)
-    console.log({ name, email, role, phoneNumber, address, status, photo });
-    setVisible(false); // Close the modal after submission
+    setErrorMessage('');
+
+    if (!userData.name || !userData.email || (!editingUser && !userData.password) || !userData.phoneNumber) {
+      setErrorMessage('Please fill in all required fields.');
+      return;
+    }
+
+    const submissionData = {
+      ...userData,
+      status: userData.status ? 'active' : 'inactive',
+    };
+
+    try {
+      if (editingUser) {
+        await dispatch(updateUser({ id: editingUser._id, userData: submissionData })).unwrap();
+      } else {
+        await dispatch(addUser(submissionData)).unwrap();
+      }
+      handleClose();
+    } catch (error) {
+      setErrorMessage(error.message || 'Operation failed');
+    }
+  };
+
+  const handleClose = () => {
+    setUserData({
+      name: '',
+      email: '',
+      password: '',
+      role: 'User',
+      phoneNumber: '',
+      address: '',
+      status: true,
+      photo: '',
+      activeStart: '',
+      activeEnd: '',
+    });
+    setErrorMessage('');
+    setVisible(false);
   };
 
   return (
-    <CModal visible={visible} onClose={() => setVisible(false)}>
-      <CModalHeader onClose={() => setVisible(false)}>
+    <CModal visible={visible} onClose={handleClose} alignment="center" backdrop="static" size="lg">
+      <CModalHeader className="bg-secondary text-white">
         <CModalTitle>{editingUser ? 'Edit User' : 'Add User'}</CModalTitle>
       </CModalHeader>
       <CModalBody>
-        <CForm onSubmit={handleSubmit}>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="userName">Name</CFormLabel>
-              <CFormInput
-                type="text"
-                id="userName"
-                placeholder="Enter User Name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </CCol>
-          </CRow>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="userEmail">Email</CFormLabel>
-              <CFormInput
-                type="email"
-                id="userEmail"
-                placeholder="Enter User Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </CCol>
-          </CRow>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="userRole">Role</CFormLabel>
-              <CFormSelect
-                id="userRole"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="User">User</option>
-                <option value="Admin">Admin</option>
-                <option value="SuperAdmin">Super Admin</option>
-              </CFormSelect>
-            </CCol>
-          </CRow>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="userPhone">Phone Number</CFormLabel>
-              <CFormInput
-                type="text"
-                id="userPhone"
-                placeholder="Enter Phone Number"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-            </CCol>
-          </CRow>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="userAddress">Address</CFormLabel>
-              <CFormInput
-                type="text"
-                id="userAddress"
-                placeholder="Enter Address"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
-            </CCol>
-          </CRow>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="userStatus">Status</CFormLabel>
-              <CFormSelect
-                id="userStatus"
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </CFormSelect>
-            </CCol>
-          </CRow>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="userPhoto">Photo URL</CFormLabel>
-              <CFormInput
-                type="text"
-                id="userPhoto"
-                placeholder="Enter Photo URL"
-                value={photo}
-                onChange={(e) => setPhoto(e.target.value)}
-              />
-            </CCol>
-          </CRow>
-        </CForm>
+        <CCard className="border-0 shadow-sm">
+          <CCardBody>
+            {errorMessage && (
+              <CAlert color="danger" className="mb-4">
+                {errorMessage}
+              </CAlert>
+            )}
+            <CForm onSubmit={handleSubmit}>
+              <CRow className="g-4">
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="text"
+                      name="name"
+                      value={userData.name}
+                      onChange={handleChange}
+                      placeholder="Enter user Name"
+                      required
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="email"
+                      name="email"
+                      value={userData.email}
+                      onChange={handleChange}
+                      placeholder="Enter user Email"
+                      required
+                    />
+                  </CInputGroup>
+                </CCol>
+                {!editingUser && (
+                  <CCol xs={12}>
+                    <CInputGroup>
+                      <CFormInput
+                        type="password"
+                        name="password"
+                        value={userData.password}
+                        onChange={handleChange}
+                        placeholder="Enter Password"
+                        required
+                      />
+                    </CInputGroup>
+                  </CCol>
+                )}
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="text"
+                      name="phoneNumber"
+                      value={userData.phoneNumber}
+                      onChange={handleChange}
+                      placeholder="Enter Phone Number"
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="text"
+                      name="address"
+                      value={userData.address}
+                      onChange={handleChange}
+                      placeholder="Enter Address"
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CFormSelect name="role" value={userData.role} onChange={handleChange}>
+                    <option value="user">User</option>
+                  </CFormSelect>
+                </CCol>
+                <CCol xs={12}>
+                  <CustomSwitch
+                    label="Active Status"
+                    name="status"
+                    checked={userData.status}
+                    onChange={handleStatusChange}
+                  />
+                </CCol>
+              </CRow>
+
+              <CModalFooter className="border-top-0">
+                <CButton color="secondary" variant="ghost" onClick={handleClose}>
+                  Cancel
+                </CButton>
+                <CButton color="primary" type="submit">
+                  {editingUser ? 'Update User' : 'Add User'}
+                </CButton>
+              </CModalFooter>
+            </CForm>
+          </CCardBody>
+        </CCard>
       </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" onClick={() => setVisible(false)}>
-          Cancel
-        </CButton>
-        <CButton color="primary" onClick={handleSubmit}>
-          {editingUser ? 'Update User' : 'Add User'}
-        </CButton>
-      </CModalFooter>
     </CModal>
   );
 };

@@ -12,12 +12,14 @@ import SuperAdminTable from './SuperAdminTable';
 import SuperAdminModal from './SuperAdminModal';
 import SuperAdminDeleteModal from './SuperAdminDeleteModal';
 import EditPhotoModal from '../EditPhotoModal';
-import '../Super.scss';
 import { ToastContainer, toast } from 'react-toastify';
+import '../Super.scss';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ViewSuperAdmin = () => {
   const dispatch = useDispatch();
   const { superAdmins, loading, totalPages, currentPage, error } = useSelector((state) => state.superAdmin);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [superAdminModalVisible, setSuperAdminModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -25,30 +27,16 @@ const ViewSuperAdmin = () => {
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [editingSuperAdmin, setEditingSuperAdmin] = useState(null);
   const [adminToEdit, setAdminToEdit] = useState(null);
-  const [errorMessage, setErrorMessage] = useState(''); // Define error message state
+  const [errorMessage, setErrorMessage] = useState('');
   const itemsPerPage = 5;
 
-
   useEffect(() => {
-    dispatch(fetchSuperAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+    dispatch(fetchSuperAdmins({ page: currentPage || 1, limit: itemsPerPage, search: searchTerm }));
   }, [dispatch, currentPage, searchTerm]);
 
-
   const handlePageChange = (page) => {
-    if (page !== currentPage) {
-      dispatch(fetchSuperAdmins({ page, limit: itemsPerPage, search: searchTerm }));
-    }
+    dispatch(fetchSuperAdmins({ page, limit: itemsPerPage, search: searchTerm }));
   };
-
-  const filteredSuperAdminData = Array.isArray(superAdmins)
-    ? superAdmins.filter(
-        (admin) =>
-          admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          admin.email.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
-
-  const totalFilteredPages = Math.ceil(filteredSuperAdminData.length / itemsPerPage);
 
   const handleDelete = (admin) => {
     setAdminToDelete(admin);
@@ -60,7 +48,9 @@ const ViewSuperAdmin = () => {
       await dispatch(deleteSuperAdmin(adminToDelete._id)).unwrap();
       dispatch(fetchSuperAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
       setDeleteModalVisible(false);
+      toast.success('Super Admin deleted successfully');
     } catch (error) {
+      toast.error('Failed to delete Super Admin');
       console.error('Failed to delete Super Admin:', error);
     }
   };
@@ -72,43 +62,35 @@ const ViewSuperAdmin = () => {
 
   const handleSavePhoto = async (photoFile) => {
     if (adminToEdit) {
-      await dispatch(uploadSuperAdminPhoto({ id: adminToEdit._id, photo: photoFile }));
+      dispatch(uploadSuperAdminPhoto({ id: adminToEdit._id, photo: photoFile }));
       dispatch(fetchSuperAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
       setEditPhotoVisible(false);
+      toast.success('Photo updated successfully');
     }
   };
 
   const handleSave = async (updatedData) => {
     try {
-      setErrorMessage(''); // Clear previous error message
-      await dispatch(
-        updateSuperAdmin({
-          id: editingSuperAdmin._id,
-          superAdminData: updatedData,
-        })
-      ).unwrap();
+      await dispatch(updateSuperAdmin({ id: editingSuperAdmin._id, superAdminData: updatedData })).unwrap();
       dispatch(fetchSuperAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
       setSuperAdminModalVisible(false);
+      toast.success('Super Admin updated successfully');
     } catch (error) {
-      setErrorMessage(error.message); // Set the error message
-      console.error('Failed to update Super Admin:', error.message);
+      setErrorMessage(error.message);
+      toast.error('Failed to update Super Admin');
+      console.error('Failed to update Super Admin:', error);
     }
   };
 
-
   const handleAddSuperAdmin = async (superAdminData) => {
     try {
-      const result = await dispatch(addSuperAdmin(superAdminData)).unwrap();
+      await dispatch(addSuperAdmin(superAdminData)).unwrap();
+      dispatch(fetchSuperAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
       toast.success('Super Admin added successfully');
-      setVisible(false);
-      return result;
+      setSuperAdminModalVisible(false);
     } catch (error) {
-      const errorMessage = error?.message || 'Failed to add Super Admin';
-      toast.error(errorMessage);
-      if (error?.status === 401) {
-        window.location.href = '/login';
-      }
-      throw new Error(errorMessage);
+      toast.error(error?.message || 'Failed to add Super Admin');
+      console.error('Failed to add Super Admin:', error);
     }
   };
 
@@ -139,15 +121,15 @@ const ViewSuperAdmin = () => {
                 {error.message}
               </CAlert>
             )}
-            {errorMessage && ( // Display error from state
+            {errorMessage && (
               <CAlert color="danger" className="mb-4">
                 {errorMessage}
               </CAlert>
             )}
             <SuperAdminTable
-              superAdmins={filteredSuperAdminData}
-              currentPage={currentPage}
-              totalPages={totalFilteredPages}
+              superAdmins={superAdmins}
+              currentPage={currentPage || 1}
+              totalPages={totalPages}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               handleEdit={(admin) => {
@@ -161,13 +143,17 @@ const ViewSuperAdmin = () => {
           </CCardBody>
         </CCard>
       </CCol>
-      <SuperAdminModal
-        visible={superAdminModalVisible}
-        setVisible={setSuperAdminModalVisible}
-        editingSuperAdmin={editingSuperAdmin}
-        handleSave={handleSave}
-        handleAddSuperAdmin={handleAddSuperAdmin}
-      />
+
+      {/* Modals */}
+      {superAdminModalVisible && (
+        <SuperAdminModal
+          visible={superAdminModalVisible}
+          setVisible={setSuperAdminModalVisible}
+          editingSuperAdmin={editingSuperAdmin}
+          handleSave={handleSave}
+          handleAddSuperAdmin={handleAddSuperAdmin}
+        />
+      )}
       <SuperAdminDeleteModal
         visible={deleteModalVisible}
         setDeleteModalVisible={setDeleteModalVisible}
@@ -180,7 +166,7 @@ const ViewSuperAdmin = () => {
         admin={adminToEdit}
         onSavePhoto={handleSavePhoto}
       />
-      <ToastContainer />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </CRow>
   );
 };

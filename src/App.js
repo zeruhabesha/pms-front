@@ -17,7 +17,7 @@ const Register = React.lazy(() => import('./views/pages/register/Register'));
 const Page404 = React.lazy(() => import('./views/pages/page404/Page404'));
 const Page500 = React.lazy(() => import('./views/pages/page500/Page500'));
 const Dashboard = React.lazy(() => import('./views/dashboard/Dashboard'));
-const Superadmin = React.lazy(() => import('./views/superadmin/SuperAdmin'));
+const SuperAdmin = React.lazy(() => import('./views/superadmin/SuperAdmin'));
 const Admin = React.lazy(() => import('./views/admin/Admin'));
 const User = React.lazy(() => import('./views/users/User'));
 const Agreement = React.lazy(() => import('./views/agreement/Agreement'));
@@ -70,7 +70,7 @@ const App = () => {
           {/* Protected Routes under DefaultLayout */}
           <Route element={<DefaultLayout />}>
             <Route path="/dashboard" element={<ProtectedRoute element={Dashboard} />} />
-            <Route path="/account/superadmin" element={<ProtectedRoute element={Superadmin} />} />
+            <Route path="/account/superadmin" element={<ProtectedRoute element={SuperAdmin} />} />
             <Route path="/account/admin" element={<ProtectedRoute element={Admin} />} />
             <Route path="/account/users" element={<ProtectedRoute element={User} />} />
             <Route path="/agreement" element={<ProtectedRoute element={Agreement} />} />

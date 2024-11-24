@@ -4,17 +4,15 @@ import SuperAdminService from '../services/superadmin.service';
 
 export const fetchSuperAdmins = createAsyncThunk(
   'superAdmin/fetchSuperAdmins',
-  async (_, { rejectWithValue }) => {
+  async ({ page, limit, search }, { rejectWithValue }) => {
     try {
-      const response = await SuperAdminService.fetchSuperAdmins();
+      const response = await SuperAdminService.fetchSuperAdmins(page, limit, search);
       return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
   }
 );
-
-
 
 export const addSuperAdmin = createAsyncThunk(
   'superAdmin/add',

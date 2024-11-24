@@ -1,94 +1,157 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProperties, deleteProperty, updatePropertyPhoto } from '../../api/actions/PropertyAction';
 import {
   CRow,
-  CButton,
+  CCol,
   CCard,
   CCardBody,
   CCardHeader,
-  CCol,
-  CTable,
-  CTableBody,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-  CTableDataCell,
   CFormInput,
+  CModal,
+  CModalBody,
+  CModalHeader,
+  CModalTitle,
+  CButton,
+  CSpinner,
 } from '@coreui/react';
-import { CIcon } from '@coreui/icons-react'; // Correct import for CIcon
-import { cilPencil, cilTrash } from '@coreui/icons'; // Correct icons import
-import AddProperty from './AddProperty'; // Import the AddProperty modal component
+import { CIcon } from '@coreui/icons-react';
+import { cilList, cilTrash, cilPencil, cilFullscreen } from '@coreui/icons';
+
+import PropertyTable from './PropertyTable';
+import AddProperty from './AddProperty';
+import PropertyDeleteModal from './PropertyDeleteModal';
 import '../Super.scss';
+import './property.scss';
 
 const ViewProperty = () => {
-  // State for search term, pagination, modal, and expanded property
-  const [searchTerm, setSearchTerm] = useState('');
+  const dispatch = useDispatch();
+  const { properties, loading, error, totalPages } = useSelector((state) => state.property);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const [visible, setVisible] = useState(false);
-  const [editingProperty, setEditingProperty] = useState(null); // Track property being edited
-  const [expandedProperties, setExpandedProperties] = useState([]); // Track expanded properties
-  const itemsPerPage = 5; // Define items per page
+  const [viewModal, setViewModal] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [editingProperty, setEditingProperty] = useState(null);
+  const [viewingProperty, setViewingProperty] = useState(null);
+  const [propertyToDelete, setPropertyToDelete] = useState(null);
+  const [propertyModalVisible, setPropertyModalVisible] = useState(false);
+  const [photoToUpdate, setPhotoToUpdate] = useState(null); // New state for the photo to update
+  const [newPhoto, setNewPhoto] = useState(null); // New state for the new photo
+  const [expandedImage, setExpandedImage] = useState(null); // State to hold the image to be expanded
+  const [isFullscreenModalVisible, setFullscreenModalVisible] = useState(false); // Fullscreen modal visibility
 
-  // Sample property data (you can replace this with actual API data)
-  const propertyData = [
-    {
-      id: 1,
-      title: 'Property One',
-      description: 'A spacious apartment in the city center',
-      address: '123 Main St',
-      price: 500000,
-      rentPrice: 2000,
-      numberOfUnits: 10,
-      propertyType: 'Apartment',
-      floorPlan: 'https://example.com/floorplan1.jpg',
-      amenities: ['Pool', 'Gym'],
-      photos: ['https://example.com/photo1.jpg', 'https://example.com/photo2.jpg'],
-    },
-    {
-      id: 2,
-      title: 'Property Two',
-      description: 'Luxury villa with private pool',
-      address: '456 Ocean Ave',
-      price: 1200000,
-      rentPrice: 5000,
-      numberOfUnits: 5,
-      propertyType: 'Villa',
-      floorPlan: 'https://example.com/floorplan2.jpg',
-      amenities: ['Private Pool', 'Garden'],
-      photos: ['https://example.com/photo3.jpg', 'https://example.com/photo4.jpg'],
-    },
-    // Add more sample data for testing
-  ];
+  const itemsPerPage = 5;
 
-  // Filter property data based on the search term
-  const filteredPropertyData = propertyData.filter(
-    (property) =>
-      property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      property.propertyType.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch properties
+  useEffect(() => {
+    const loadProperties = async () => {
+      try {
+        await dispatch(
+          fetchProperties({
+            page: currentPage,
+            limit: itemsPerPage,
+            search: searchTerm,
+          })
+        ).unwrap();
+      } catch (error) {
+        console.error(error.message || 'Failed to fetch properties');
+      }
+    };
 
-  // Pagination logic
-  const indexOfLastProperty = currentPage * itemsPerPage;
-  const indexOfFirstProperty = indexOfLastProperty - itemsPerPage;
-  const currentProperties = filteredPropertyData.slice(indexOfFirstProperty, indexOfLastProperty);
-  const totalPages = Math.ceil(filteredPropertyData.length / itemsPerPage);
+    const timeoutId = setTimeout(() => {
+      loadProperties();
+    }, 300);
 
-  // Function to handle Edit button click and open modal
-  const handleEdit = (property) => {
-    setEditingProperty(property); // Set the property being edited
-    setVisible(true); // Show the modal
-  };
+    return () => clearTimeout(timeoutId);
+  }, [dispatch, currentPage, itemsPerPage, searchTerm]);
 
-  // Function to handle adding a new property
   const handleAddProperty = () => {
-    setEditingProperty(null); // Reset editing state
-    setVisible(true); // Show the modal
+    setEditingProperty(null); // Clear editing state for adding a new property
+    setPropertyModalVisible(true);
   };
 
-  // Toggle expanded state of a property
-  const toggleExpandProperty = (propertyId) => {
-    setExpandedProperties((prev) =>
-      prev.includes(propertyId) ? prev.filter((id) => id !== propertyId) : [...prev, propertyId]
-    );
+  const handleEdit = (property) => {
+    const propertyToEdit = {
+      ...property,
+      existingPhotos: property.photos || [],
+      photos: [], // Clear current photos in the form
+    };
+    setEditingProperty(propertyToEdit);
+    setPropertyModalVisible(true);
+  };
+
+  const openDeleteModal = (property) => {
+    setPropertyToDelete(property);
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!propertyToDelete?._id) {
+      console.error('Invalid property ID');
+      return;
+    }
+
+    try {
+      await dispatch(deleteProperty(propertyToDelete._id)).unwrap();
+      dispatch(fetchProperties({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+      setDeleteModalVisible(false);
+      console.log('Property deleted successfully');
+    } catch (error) {
+      console.error(error.message || 'Failed to delete property');
+    }
+  };
+
+  const handleView = (property) => {
+    setViewingProperty(property);
+    setViewModal(true);
+  };
+
+  // Handlers for photo update/delete
+  const handlePhotoDelete = async (photo) => {
+    try {
+      await dispatch(deletePropertyPhoto(viewingProperty._id, photo)); // Replace with your action
+      setViewingProperty(prev => ({
+        ...prev,
+        photos: prev.photos.filter(p => p !== photo)
+      }));
+    } catch (error) {
+      console.error("Error deleting photo", error);
+    }
+  };
+
+  const handlePhotoUpdate = async () => {
+    if (newPhoto) {
+      try {
+        const formData = new FormData();
+        formData.append("photo", newPhoto);
+        await dispatch(updatePropertyPhoto(viewingProperty._id, formData)); // Replace with your action
+        setViewingProperty(prev => ({
+          ...prev,
+          photos: prev.photos.map(photo =>
+            photo === photoToUpdate ? newPhoto.name : photo // Replace with updated photo name
+          )
+        }));
+        setPhotoToUpdate(null);
+        setNewPhoto(null);
+      } catch (error) {
+        console.error("Error updating photo", error);
+      }
+    }
+  };
+
+  const filteredProperties = Array.isArray(properties) ? properties : [];
+  const currentProperties = filteredProperties;
+
+  // Handle the full-screen modal for image
+  const handleExpandImage = (photo) => {
+    setExpandedImage(photo);
+    setFullscreenModalVisible(true); // Show the full-screen modal
+  };
+
+  const handleCloseFullscreen = () => {
+    setFullscreenModalVisible(false);
+    setExpandedImage(null); // Reset the expanded image
   };
 
   return (
@@ -98,18 +161,15 @@ const ViewProperty = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Properties</strong>
             <div id="container">
-            <button
-          className="learn-more"
-          onClick={handleAddProperty}>
-          <span className="circle" aria-hidden="true">
-            <span className="icon arrow"></span>
-          </span>
-          <span className="button-text">Add Property</span>
-        </button>
-        </div>
+              <button className="learn-more" onClick={handleAddProperty}>
+                <span className="circle" aria-hidden="true">
+                  <span className="icon arrow"></span>
+                </span>
+                <span className="button-text">Add Property</span>
+              </button>
+            </div>
           </CCardHeader>
           <CCardBody>
-            {/* Search Box */}
             <CFormInput
               type="text"
               placeholder="Search by title or property type"
@@ -117,93 +177,142 @@ const ViewProperty = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="mb-3"
             />
-            <div className="table-responsive">
-          <CTable>
-            <CTableHead color="light">
-              <CTableRow>
-                <CTableHeaderCell scope="col">#</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Title</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Description</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Address</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Type</CTableHeaderCell>
-                <CTableHeaderCell scope="col">Actions</CTableHeaderCell>
-              </CTableRow>
-            </CTableHead>
-            <CTableBody>
-              {currentProperties.map((property, index) => (
-                <React.Fragment key={property.id}>
-                  <CTableRow>
-                    <CTableHeaderCell scope="row">{index + indexOfFirstProperty + 1}</CTableHeaderCell>
-                    <CTableDataCell>{property.title}</CTableDataCell>
-                    <CTableDataCell>{property.description}</CTableDataCell>
-                    <CTableDataCell>{property.address}</CTableDataCell>
-                    <CTableDataCell>{property.propertyType}</CTableDataCell>
-                    <CTableDataCell>
-                      <CButton color="dark" size="sm" className="me-2" onClick={() => handleEdit(property)}>
-                        <CIcon icon={cilPencil} /> {/* Edit icon */}
-                      </CButton>
-                      <CButton color="danger" className="me-2" size="sm" onClick={() => handleDelete(property.id)}>
-                        <CIcon icon={cilTrash} /> {/* Delete icon */}
-                      </CButton>
-                      <CButton color="secondary" size="sm" onClick={() => toggleExpandProperty(property.id)}>
-                        {expandedProperties.includes(property.id) ? '-' : '+'}
-                      </CButton>
-                    </CTableDataCell>
-                  </CTableRow>
-                  {/* Expanded section */}
-                  {expandedProperties.includes(property.id) && (
-                    <CTableRow>
-                      <CTableDataCell colSpan="6">
-                        <div>
-                          <strong>Unit:</strong> {property.numberOfUnits}
-                        </div>
-                        <div>
-                          <strong>Rent Price:</strong> {property.rentPrice ? `$${property.rentPrice.toLocaleString()}` : 'N/A'}
-                        </div>
-                        <div>
-                          <strong>Price:</strong> ${property.price.toLocaleString()}
-                        </div>
-                        <div>
-                          <strong>Floor Plan:</strong> <a href={property.floorPlan} target="_blank" rel="noopener noreferrer">View Floor Plan</a>
-                        </div>
-                        <div>
-                          <strong>Amenities:</strong> {property.amenities.join(', ')}
-                        </div>
-                        <div>
-                          <strong>Photos:</strong> {property.photos.length > 0 ? <a href={property.photos[0]} target="_blank" rel="noopener noreferrer">View Photos</a> : 'No Photos'}
-                        </div>
-                      </CTableDataCell>
-                    </CTableRow>
-                  )}
-                </React.Fragment>
-              ))}
-            </CTableBody>
-          </CTable>
-        </div>
-            {/* Pagination Controls */}
-            <div className="d-flex justify-content-between mt-3">
-              <CButton
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              >
-                Previous
-              </CButton>
-              <CButton
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              >
-                Next
-              </CButton>
-            </div>
-            <div className="text-center mt-2">
-              Page {currentPage} of {totalPages}
-            </div>
+            {loading ? (
+              <div>Loading...</div>
+            ) : error ? (
+              <div>Error: {error}</div>
+            ) : currentProperties.length > 0 ? (
+              <PropertyTable
+                properties={currentProperties}
+                onEdit={handleEdit}
+                onDelete={openDeleteModal}
+                onView={handleView}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                totalPages={totalPages}
+                itemsPerPage={itemsPerPage}
+              />
+            ) : (
+              <div>No properties found</div>
+            )}
           </CCardBody>
         </CCard>
       </CCol>
 
-      {/* Modal to Add/Edit Property */}
-      <AddProperty visible={visible} setVisible={setVisible} editingProperty={editingProperty} />
+      {/* Viewing Property Details Modal */}
+      {viewingProperty && (
+        <CModal visible={viewModal} onClose={() => setViewModal(false)}>
+          <CModalHeader>
+            <CModalTitle>Property Details</CModalTitle>
+          </CModalHeader>
+          <CModalBody>
+            <p><strong>Title:</strong> {viewingProperty.title}</p>
+            <p><strong>Description:</strong> {viewingProperty.description}</p>
+            <p><strong>Address:</strong> {viewingProperty.address}</p>
+            <p><strong>Property Type:</strong> {viewingProperty.propertyType}</p>
+            <p><strong>Price:</strong> ${viewingProperty.price}</p>
+            <p><strong>Rent Price:</strong> ${viewingProperty.rentPrice || 'N/A'}</p>
+            <p><strong>Number of Units:</strong> {viewingProperty.numberOfUnits}</p>
+            <p><strong>Floor Plan:</strong> {viewingProperty.floorPlan || 'N/A'}</p>
+            <p><strong>Amenities:</strong> {viewingProperty.amenities?.join(', ') || 'None'}</p>
+            <p><strong>Photos:</strong></p>
+            <div>
+              {viewingProperty.photos && viewingProperty.photos.length > 0 ? (
+                viewingProperty.photos.map((photo, index) => (
+                  <div key={index} className="photo-container" style={{ marginBottom: '10px' }}>
+                    <img
+                      src={`http://localhost:4000/api/v1/properties/${viewingProperty._id}/photos/${photo}`}
+                      alt={`Property Photo ${index + 1}`}
+                      style={{ width: '100%', maxWidth: '200px', margin: '5px' }}
+                        className="me-2"
+                    />
+                    <div className="photo-buttons">
+                      <CButton
+                        color="light"
+                        size="sm"
+                        onClick={() => handlePhotoDelete(photo)}
+                        className="me-2"
+                      >
+                        <CIcon icon={cilTrash} />
+                      </CButton>
+                      <CButton
+                        color="light"
+                        size="sm"
+                          className="me-2"
+                        onClick={() => {
+                          setPhotoToUpdate(photo);
+                          setNewPhoto(null);
+                        }}
+                      >
+                        <CIcon icon={cilPencil} />
+                      </CButton>
+                      <CButton
+                        color="light"
+                        size="sm"
+                        onClick={() => handleExpandImage(photo)} // Fullscreen image handler
+                      >
+                        <CIcon icon={cilFullscreen} />
+                      </CButton>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p>No photos available</p>
+              )}
+            </div>
+          </CModalBody>
+        </CModal>
+      )}
+
+      {/* Full-Screen Image Modal */}
+      <CModal visible={isFullscreenModalVisible} onClose={handleCloseFullscreen} size="lg">
+        <CModalHeader>
+          <CModalTitle>Full-Screen Image</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          {expandedImage && (
+            <img
+              src={`http://localhost:4000/api/v1/properties/${viewingProperty._id}/photos/${expandedImage}`}
+              alt="Expanded Property Photo"
+              style={{ width: '100%' }}
+            />
+          )}
+        </CModalBody>
+      </CModal>
+
+      {/* Modal for updating photo */}
+      <CModal visible={photoToUpdate !== null} onClose={() => setPhotoToUpdate(null)}>
+        <CModalHeader>
+          <CModalTitle>Update Photo</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CFormInput
+            type="file"
+            onChange={(e) => setNewPhoto(e.target.files[0])}
+            accept="image/*"
+          />
+          <CButton color="primary" onClick={handlePhotoUpdate}>
+            Update Photo
+          </CButton>
+        </CModalBody>
+      </CModal>
+
+      {/* Add Property Modal */}
+      {propertyModalVisible && (
+        <AddProperty
+          visible={propertyModalVisible}
+          setVisible={setPropertyModalVisible}
+          editingProperty={editingProperty}
+        />
+      )}
+
+      {/* Delete Property Modal */}
+      <PropertyDeleteModal
+        visible={deleteModalVisible}
+        setDeleteModalVisible={setDeleteModalVisible}
+        propertyToDelete={propertyToDelete}
+        confirmDelete={confirmDelete}
+      />
     </CRow>
   );
 };

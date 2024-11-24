@@ -5,6 +5,8 @@ const Property = () => {
   return (
     <div>
         <ViewProperty />
+
+        
     </div>
   )
 }

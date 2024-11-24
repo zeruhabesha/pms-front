@@ -14,10 +14,9 @@ import {
 import { CIcon } from '@coreui/icons-react';
 import { cilPencil, cilTrash, cilCheckCircle, cilXCircle } from '@coreui/icons';
 import placeholder from '../image/placeholder.png';
-import './SuperAdminTable.css'; // Import CSS for custom styles
 
 const SuperAdminTable = ({
-  superAdmins,
+  superAdmins = [],
   currentPage,
   totalPages,
   searchTerm,
@@ -37,7 +36,7 @@ const SuperAdminTable = ({
         className="mb-3"
       />
       <div className="table-responsive">
-        <CTable hover className="table-striped">
+        <CTable hover>
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>#</CTableHeaderCell>
@@ -58,30 +57,31 @@ const SuperAdminTable = ({
               </CTableRow>
             ) : (
               superAdmins.map((admin, index) => (
-                <CTableRow key={admin._id || index}>
+                <CTableRow key={admin?._id || index}>
                   <CTableDataCell>{(currentPage - 1) * 5 + index + 1}</CTableDataCell>
                   <CTableDataCell>
                     <img
-                      src={admin.photo ? `http://localhost:4000/api/v1/user/${admin._id}/photo` : placeholder}
+                      src={admin?.photo ? `http://localhost:4000/api/v1/users/${admin._id}/photo` : placeholder}
                       alt="User"
                       style={{ width: '50px', height: '50px', borderRadius: '50%' }}
+                      className="me-2"
                     />
                     <CButton color="light" size="sm" onClick={() => handleEditPhoto(admin)} title="Edit photo">
                       <CIcon icon={cilPencil} />
                     </CButton>
                   </CTableDataCell>
-                  <CTableDataCell>{admin.name}</CTableDataCell>
-                  <CTableDataCell>{admin.email}</CTableDataCell>
-                  <CTableDataCell>{admin.phoneNumber}</CTableDataCell>
+                  <CTableDataCell>{admin?.name || 'N/A'}</CTableDataCell>
+                  <CTableDataCell>{admin?.email || 'N/A'}</CTableDataCell>
+                  <CTableDataCell>{admin?.phoneNumber || 'N/A'}</CTableDataCell>
                   <CTableDataCell>
-                    {admin.status.toLowerCase() === 'active' ? (
+                    {admin?.status?.toLowerCase() === 'active' ? (
                       <CIcon icon={cilCheckCircle} className="text-success" title="Active" />
                     ) : (
                       <CIcon icon={cilXCircle} className="text-danger" title="Inactive" />
                     )}
                   </CTableDataCell>
                   <CTableDataCell>
-                    <CButton color="light" size="sm" onClick={() => handleEdit(admin)} title="Edit">
+                    <CButton color="light" size="sm" className="me-2" onClick={() => handleEdit(admin)} title="Edit">
                       <CIcon icon={cilPencil} />
                     </CButton>
                     <CButton color="danger" size="sm" onClick={() => handleDelete(admin)} title="Delete">
@@ -94,7 +94,8 @@ const SuperAdminTable = ({
           </CTableBody>
         </CTable>
       </div>
-      <CPagination className="mt-3 justify-content-center">
+
+      <CPagination className="mt-3">
         <CPaginationItem disabled={currentPage === 1} onClick={() => handlePageChange(1)}>
           &laquo;
         </CPaginationItem>

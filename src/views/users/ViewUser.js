@@ -1,97 +1,131 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  CRow,
-  CCol,
-  CCard,
-  CCardBody,
-  CCardHeader,
-  CButton,
-  CTable,
-  CTableBody,
-  CTableHead,
-  CTableHeaderCell,
-  CTableRow,
-  CTableDataCell,
-  CFormInput,
+  CRow, CCol, CCard, CCardHeader, CCardBody, CAlert,
 } from '@coreui/react';
-import { CIcon } from '@coreui/icons-react'; // Import CIcon for icons
-import { cilPencil, cilTrash } from '@coreui/icons'; // Import necessary icons
-import AddUser from './AddUser'; // Import the modal component
-import EditPhotoModal from '../EditPhotoModal'; // Import the Edit Photo Modal component
-import placeholder from '../image/placeholder.png'; // Placeholder image
-import  { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchSuperAdmins, deleteSuperAdmin, addSuperAdmin, updateSuperAdmin } from '../../api/actions/superAdminActions';
+import {
+  fetchUsers, deleteUser, addUser, updateUser, uploadUserPhoto,
+} from '../../api/actions/userActions';
+import UserTable from './UserTable';
+import UserModal from './UserModal';
+import UserDeleteModal from './UserDeleteModal';
+import EditPhotoModal from '../EditPhotoModal';
+import { ToastContainer, toast } from 'react-toastify';
+import './User.scss';
+import '../Super.scss';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ViewUser = () => {
-  // State variables
-  const dispatch = useDispatch();
-  const { superAdmins = [], loading, totalUsers } = useSelector((state) => state.superAdmin);
-
   const [searchTerm, setSearchTerm] = useState('');
-  const [visible, setVisible] = useState(false);
-  const [editingUser, setEditingUser] = useState(null); // State to track which user is being edited
-  const [currentPage, setCurrentPage] = useState(1); // State for current page
-  const [editPhotoVisible, setEditPhotoVisible] = useState(false); // State to control photo edit modal
-  const itemsPerPage = 5; // Define items per page
-  useEffect(() => {
-    dispatch(fetchSuperAdmins(currentPage, 5, searchTerm));
-  }, [dispatch, currentPage, searchTerm]);
+  const [userModalVisible, setUserModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [editPhotoVisible, setEditPhotoVisible] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [userToEdit, setUserToEdit] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
+  const itemsPerPage = 5;
+  const [localCurrentPage, setLocalCurrentPage] = useState(1);
 
-  const handlePageChange = (page) => {
-    if (page !== currentPage) {
-      dispatch(fetchSuperAdmins(page, 5, searchTerm));
+  const dispatch = useDispatch();
+  const { users, loading, totalUsers, totalPages, error } = useSelector((state) => state.user);
+
+  // // Handle page change
+  // const handlePageChange = (page) => {
+  //   if (page < 1 || page > totalPages) return;
+  //   setLocalCurrentPage(page);
+  // };
+
+  // Fetch users based on page and search term
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await dispatch(fetchUsers({ 
+          page: localCurrentPage, 
+          limit: itemsPerPage, 
+          search: searchTerm.trim() 
+        }));
+      } catch (err) {
+        setErrorMessage(err?.message || 'Failed to fetch users');
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      fetchData();
+    }, 300); // Add debounce for search
+
+    return () => clearTimeout(timeoutId);
+  }, [dispatch, localCurrentPage, searchTerm, itemsPerPage]);
+  const handleSearch = (newSearchTerm) => {
+    setSearchTerm(newSearchTerm);
+    setLocalCurrentPage(1); // Reset to the first page on search
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
+    setUserModalVisible(true);
+  };
+
+  const handleDelete = (user) => {
+    setUserToDelete(user);
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await dispatch(deleteUser(userToDelete._id)).unwrap();
+      toast.success('User deleted successfully');
+      handlePageChange(localCurrentPage); // Refetch users after deletion
+      setDeleteModalVisible(false);
+    } catch (error) {
+      toast.error('Failed to delete user');
     }
   };
 
-  // useEffect(() => {
-  //   dispatch(fetchSuperAdmins(currentPage, itemsPerPage, searchTerm));
-  // }, [dispatch, currentPage, searchTerm]);
-
-  // Log to check data structure of superAdmins
-  useEffect(() => {
-    console.log("superAdmins data:", superAdmins);
-  }, [superAdmins]);
-  // Sample user data reflecting the Mongoose schema
-  const userData = [
-    { id: 1, name: 'Mark', email: 'mark@example.com', role: 'User', phoneNumber: '123-456-7890', address: '123 Main St', status: 'Active', photo: placeholder },
-    { id: 2, name: 'Jacob', email: 'jacob@example.com', role: 'Admin', phoneNumber: '098-765-4321', address: '456 Elm St', status: 'Inactive', photo: placeholder },
-    { id: 3, name: 'Larry', email: 'larry@example.com', role: 'User', phoneNumber: '555-555-5555', address: '789 Oak St', status: 'Active', photo: placeholder },
-    { id: 4, name: 'Martha', email: 'martha@example.com', role: 'SuperAdmin', phoneNumber: '444-444-4444', address: '321 Pine St', status: 'Active', photo: placeholder },
-    { id: 5, name: 'Alice', email: 'alice@example.com', role: 'User', phoneNumber: '333-333-3333', address: '654 Maple St', status: 'Inactive', photo: placeholder },
-    { id: 6, name: 'Bob', email: 'bob@example.com', role: 'Admin', phoneNumber: '222-222-2222', address: '987 Birch St', status: 'Active', photo: placeholder },
-    // Add more sample data for testing
-  ];
-
-  // Filter user data based on the search term
-  const filteredUserData = superAdmins.filter(
-    user =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Pagination logic
-  const indexOfLastUser = currentPage * itemsPerPage;
-  const indexOfFirstUser = indexOfLastUser - itemsPerPage;
-  const currentUsers = filteredUserData.slice(indexOfFirstUser, indexOfLastUser);
-  const totalPages = Math.ceil(filteredUserData.length / itemsPerPage);
-
-  // Function to handle Edit button click and open modal
-  const handleEdit = (user) => {
-    setEditingUser(user); // Set the user being edited
-    setVisible(true); // Show the modal
-  };
-
-  // Function to handle photo editing
   const handleEditPhoto = (user) => {
-    setEditingUser(user);
+    setUserToEdit(user);
     setEditPhotoVisible(true);
   };
 
-  // Function to handle delete action
-  const handleDelete = (id) => {
-    // Implement delete functionality here (e.g., filter out the deleted user)
-    console.log(`Delete user with id: ${id}`);
+  const handleSavePhoto = async (photoFile) => {
+    if (userToEdit) {
+      await dispatch(uploadUserPhoto({ id: userToEdit._id, photo: photoFile }));
+      dispatch(fetchUsers({ page: localCurrentPage, limit: itemsPerPage, search: searchTerm }));
+      setEditPhotoVisible(false);
+      toast.success('Photo updated successfully');
+    }
+  };
+
+  const handleSave = async (updatedData) => {
+    try {
+      await dispatch(updateUser({ id: editingUser._id, userData: updatedData })).unwrap();
+      dispatch(fetchUsers({ page: localCurrentPage, limit: itemsPerPage, search: searchTerm }));
+      setUserModalVisible(false);
+      toast.success('User updated successfully');
+    } catch (error) {
+      setErrorMessage(error.message);
+      toast.error('Failed to update user');
+      console.error('Failed to update user:', error);
+    }
+  };
+
+  const handleAddUser = async (userData) => {
+    try {
+      await dispatch(addUser(userData)).unwrap();
+      dispatch(fetchUsers({ page: localCurrentPage, limit: itemsPerPage, search: searchTerm }));
+      toast.success('User added successfully');
+      setUserModalVisible(false);
+    } catch (error) {
+      console.error('Full error details:', error);
+      const detailedError = error.response?.data?.message || error.message || 'An unexpected error occurred';
+      setErrorMessage(detailedError);
+      toast.error(detailedError);
+    }
+  };
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages) return;
+    setLocalCurrentPage(page);
   };
 
   return (
@@ -100,106 +134,70 @@ const ViewUser = () => {
         <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>User Management</strong>
-            <div id="container">
             <button
-          className="learn-more"
-          onClick={() => { setEditingUser(null); setVisible(true);}}>
-          <span className="circle" aria-hidden="true">
-            <span className="icon arrow"></span>
-          </span>
-          <span className="button-text">Add User</span>
-        </button>
-        </div>
+              className="learn-more"
+              onClick={() => {
+                setEditingUser(null);
+                setUserModalVisible(true);
+              }}
+            >
+              <span className="circle" aria-hidden="true">
+                <span className="icon arrow"></span>
+              </span>
+              <span className="button-text">Add User</span>
+            </button>
           </CCardHeader>
           <CCardBody>
-            {/* Search Box */}
-            <CFormInput
-              type="text"
-              placeholder="Search by name or email"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mb-3"
-            />
-            <div className="table-responsive">
-              <CTable>
-                <CTableHead color="light">
-                  <CTableRow>
-                    <CTableHeaderCell>#</CTableHeaderCell>
-                    <CTableHeaderCell>Photo</CTableHeaderCell>
-                    <CTableHeaderCell>Name</CTableHeaderCell>
-                    <CTableHeaderCell>Email</CTableHeaderCell>
-                    <CTableHeaderCell>Role</CTableHeaderCell>
-                    <CTableHeaderCell>Phone Number</CTableHeaderCell>
-                    <CTableHeaderCell>Address</CTableHeaderCell>
-                    <CTableHeaderCell>Status</CTableHeaderCell>
-                    <CTableHeaderCell>Action</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {currentUsers.map((user, index) => (
-                    <CTableRow key={user.id}>
-                      <CTableHeaderCell scope="row">{index + indexOfFirstUser + 1}</CTableHeaderCell>
-                      <CTableDataCell>
-                        <img src={user.photo} alt="User" style={{ width: '50px', height: '50px', borderRadius: '50%' }} />
-                        <CButton color="secondary" size="sm" className="ms-2" title="Edit Photo" onClick={() => handleEditPhoto(user)}>
-                          <CIcon icon={cilPencil} />
-                        </CButton>
-                      </CTableDataCell>
-                      <CTableDataCell>{user.name}</CTableDataCell>
-                      <CTableDataCell>{user.email}</CTableDataCell>
-                      <CTableDataCell>{user.role}</CTableDataCell>
-                      <CTableDataCell>{user.phoneNumber}</CTableDataCell>
-                      <CTableDataCell>{user.address}</CTableDataCell>
-                      <CTableDataCell>
-                        <span style={{
-                          backgroundColor: user.status === 'Active' ? 'green' : 'red',
-                          color: 'white',
-                          padding: '5px 10px',
-                          borderRadius: '5px',
-                        }}>
-                          {user.status}
-                        </span>
-                      </CTableDataCell>
-                      <CTableDataCell>
-                        <CButton color="dark" size="sm" className="me-2" onClick={() => handleEdit(user)}>
-                          <CIcon icon={cilPencil} />
-                        </CButton>
-                        <CButton color="danger" size="sm" onClick={() => handleDelete(user.id)}>
-                          <CIcon icon={cilTrash} />
-                        </CButton>
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
-            </div>
-            {/* Pagination Controls */}
-            <div className="d-flex justify-content-between mt-3">
-              <CButton
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              >
-                Previous
-              </CButton>
-              <CButton
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-              >
-                Next
-              </CButton>
-            </div>
-            <div className="text-center mt-2">
-              Page {currentPage} of {totalPages}
-            </div>
+            {error && (
+              <CAlert color="danger" className="mb-4">
+                {error.message || 'An error occurred'}
+              </CAlert>
+            )}
+            {errorMessage && (
+              <CAlert color="danger" className="mb-4">
+                {errorMessage}
+              </CAlert>
+            )}
+           <UserTable
+      users={users || []}
+      currentPage={localCurrentPage}
+      totalPages={totalPages}
+      searchTerm={searchTerm}
+      setSearchTerm={handleSearch}
+      handleEdit={handleEdit}
+      handleDelete={handleDelete}
+      handleEditPhoto={handleEditPhoto}
+      handlePageChange={handlePageChange}
+      loading={loading}
+      itemsPerPage={itemsPerPage}
+    />
           </CCardBody>
         </CCard>
       </CCol>
 
-      {/* Modal to Add/Edit User */}
-      <AddUser visible={visible} setVisible={setVisible} editingUser={editingUser} />
-
-      {/* Modal to Edit Photo */}
-      <EditPhotoModal visible={editPhotoVisible} setVisible={setEditPhotoVisible} />
+      {/* Modals */}
+      {userModalVisible && (
+        <UserModal
+          visible={userModalVisible}
+          setVisible={setUserModalVisible}
+          editingUser={editingUser}
+          handleSave={handleSave}
+          handleAddUser={handleAddUser}
+        />
+      )}
+      <UserDeleteModal
+        visible={deleteModalVisible}
+        setDeleteModalVisible={setDeleteModalVisible}
+        userToDelete={userToDelete}
+        confirmDelete={confirmDelete}
+      />
+      <EditPhotoModal
+        visible={editPhotoVisible}
+        setVisible={setEditPhotoVisible}
+        user={userToEdit}
+        onSavePhoto={handleSavePhoto}
+      />
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </CRow>
   );
 };

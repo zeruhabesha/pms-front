@@ -1,28 +1,73 @@
-// AddAdmin.js
 import React, { useState, useEffect } from 'react';
-import { CButton, CModal, CModalBody, CModalHeader, CModalTitle, CModalFooter, CForm, CFormLabel, CFormInput, CRow, CCol } from '@coreui/react';
+import { 
+  CButton, 
+  CModal, 
+  CModalBody, 
+  CModalHeader, 
+  CModalTitle, 
+  CModalFooter, 
+  CForm, 
+  CFormInput, 
+  CRow, 
+  CCol,
+  CCard,
+  CCardBody,
+  CInputGroup,
+  CFormSelect,
+  CAlert,
+  CSpinner,
+} from '@coreui/react';
 import { useDispatch } from 'react-redux';
-import { addAdmin, updateAdmin } from '../../api/actions/AdminAction';
+import { addAdmin, updateAdmin } from '../../api/actions/AdminActions';
+import CustomSwitch from './CustomSwitch';
 
-const AddAdmin = ({ visible, setVisible, editingAdmin }) => {
+const AddAdmin = ({ visible, setVisible, editingAdmin = null }) => {
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
 
   const [adminData, setAdminData] = useState({
     name: '',
     email: '',
     password: '',
+    role: 'Admin',
+    phoneNumber: '',
+    address: '',
+    status: true,
+    photo: '',
+    activeStart: '',
+    activeEnd: '',
   });
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (editingAdmin) {
       setAdminData({
-        name: editingAdmin.name,
-        email: editingAdmin.email,
+        name: editingAdmin.name || '',
+        email: editingAdmin.email || '',
         password: '',
+        role: editingAdmin.role || 'Admin',
+        phoneNumber: editingAdmin.phoneNumber || '',
+        address: editingAdmin.address || '',
+        status: editingAdmin.status === 'active',
+        photo: editingAdmin.photo || '',
+        activeStart: editingAdmin.activeStart ? editingAdmin.activeStart.split('T')[0] : '',
+        activeEnd: editingAdmin.activeEnd ? editingAdmin.activeEnd.split('T')[0] : '',
       });
     } else {
-      setAdminData({ name: '', email: '', password: '' });
+      setAdminData({
+        name: '',
+        email: '',
+        password: '',
+        role: 'Admin',
+        phoneNumber: '',
+        address: '',
+        status: true,
+        photo: '',
+        activeStart: '',
+        activeEnd: '',
+      });
     }
+    setErrorMessage('');
   }, [editingAdmin]);
 
   const handleChange = (e) => {
@@ -30,71 +75,209 @@ const AddAdmin = ({ visible, setVisible, editingAdmin }) => {
     setAdminData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    if (editingAdmin) {
-      dispatch(updateAdmin({ id: editingAdmin.id, adminData }));
-    } else {
-      dispatch(addAdmin(adminData));
-    }
-    setVisible(false);
+  const handleStatusChange = (checked) => {
+    setAdminData((prev) => ({ ...prev, status: checked }));
   };
 
+  const handleSubmit = async () => {
+    // Check required fields
+    if (!adminData.name || !adminData.email || (!editingAdmin && !adminData.password)) {
+      setErrorMessage('Please fill in all required fields.');
+      return;
+    }
+  
+    try {
+      setIsLoading(true);
+  
+      // Set status as 'active' or 'inactive'
+      const submissionData = {
+        ...adminData,
+        status: adminData.status ? 'active' : 'inactive',
+        phoneNumber: adminData.phoneNumber || '',
+        address: adminData.address || '',
+      };
+  
+      if (editingAdmin && editingAdmin._id) {
+        // If editingAdmin is provided and has an _id, perform update
+        await dispatch(updateAdmin({ id: editingAdmin._id, adminData: submissionData })).unwrap();
+      } else {
+        // If editingAdmin is not provided, perform add
+        await dispatch(addAdmin(submissionData)).unwrap();
+      }
+      handleClose();
+    } catch (error) {
+      setErrorMessage(error.message || 'Operation failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  
+  const handleClose = () => {
+    setAdminData({
+      name: '',
+      email: '',
+      password: '',
+      role: 'Admin',
+      phoneNumber: '',
+      address: '',
+      status: true,
+      photo: '',
+      activeStart: '',
+      activeEnd: '',
+    });
+    setErrorMessage('');
+    setVisible(false);
+  };
+  
+
+  // const handleClose = () => {
+  //   setAdminData({
+  //     name: '',
+  //     email: '',
+  //     password: '',
+  //     role: 'Admin',
+  //     phoneNumber: '',
+  //     address: '',
+  //     status: true,
+  //     photo: '',
+  //     activeStart: '',
+  //     activeEnd: '',
+  //   });
+  //   setErrorMessage('');
+  //   setVisible(false);
+  // };
+
   return (
-    <CModal visible={visible} onClose={() => setVisible(false)}>
-      <CModalHeader onClose={() => setVisible(false)}>
+    <CModal visible={visible} onClose={handleClose} alignment="center" backdrop="static" size="lg">
+      <CModalHeader className="bg-primary text-white">
         <CModalTitle>{editingAdmin ? 'Edit Admin' : 'Add Admin'}</CModalTitle>
       </CModalHeader>
       <CModalBody>
-        <CForm>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="adminName">Name</CFormLabel>
-              <CFormInput
-                type="text"
-                id="adminName"
-                name="name"
-                value={adminData.name}
-                onChange={handleChange}
-                placeholder="Enter Admin Name"
-              />
-            </CCol>
-          </CRow>
-          <CRow className="mb-3">
-            <CCol xs={12}>
-              <CFormLabel htmlFor="adminEmail">Email</CFormLabel>
-              <CFormInput
-                type="email"
-                id="adminEmail"
-                name="email"
-                value={adminData.email}
-                onChange={handleChange}
-                placeholder="Enter Admin Email"
-              />
-            </CCol>
-          </CRow>
-          {!editingAdmin && (
-            <CRow className="mb-3">
-              <CCol xs={12}>
-                <CFormLabel htmlFor="adminPassword">Password</CFormLabel>
-                <CFormInput
-                  type="password"
-                  id="adminPassword"
-                  name="password"
-                  value={adminData.password}
-                  onChange={handleChange}
-                  placeholder="Enter Password"
-                />
-              </CCol>
-            </CRow>
-          )}
-        </CForm>
+        <CCard className="border-0 shadow-sm">
+          <CCardBody>
+            {errorMessage && (
+              <CAlert color="danger" className="mb-4">
+                {errorMessage}
+              </CAlert>
+            )}
+            <CForm>
+              <CRow className="g-4">
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="text"
+                      name="name"
+                      value={adminData.name}
+                      onChange={handleChange}
+                      placeholder="Enter Admin Name"
+                      required
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="email"
+                      name="email"
+                      value={adminData.email}
+                      onChange={handleChange}
+                      placeholder="Enter Admin Email"
+                      required
+                    />
+                  </CInputGroup>
+                </CCol>
+                {!editingAdmin && (
+                  <CCol xs={12}>
+                    <CInputGroup>
+                      <CFormInput
+                        type="password"
+                        name="password"
+                        value={adminData.password}
+                        onChange={handleChange}
+                        placeholder="Enter Password"
+                        required
+                      />
+                    </CInputGroup>
+                  </CCol>
+                )}
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="text"
+                      name="phoneNumber"
+                      value={adminData.phoneNumber}
+                      onChange={handleChange}
+                      placeholder="Enter Phone Number"
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="text"
+                      name="address"
+                      value={adminData.address}
+                      onChange={handleChange}
+                      placeholder="Enter Address"
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CFormSelect name="role" value={adminData.role} onChange={handleChange}>
+                    <option value="Admin">Admin</option>
+                    {/* Other options here if needed */}
+                  </CFormSelect>
+                </CCol>
+                
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="date"
+                      name="activeStart"
+                      value={adminData.activeStart}
+                      onChange={handleChange}
+                      placeholder="Active Start Date"
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CInputGroup>
+                    <CFormInput
+                      type="date"
+                      name="activeEnd"
+                      value={adminData.activeEnd}
+                      onChange={handleChange}
+                      placeholder="Active End Date"
+                    />
+                  </CInputGroup>
+                </CCol>
+                <CCol xs={12}>
+                  <CustomSwitch
+                    label="Active Status"
+                    name="status"
+                    checked={adminData.status}
+                    onChange={handleStatusChange}
+                  />
+                </CCol>
+              </CRow>
+              </CForm>
+          </CCardBody>
+        </CCard>
       </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" onClick={() => setVisible(false)}>
+      <CModalFooter className="border-top-0">
+        <CButton color="secondary" variant="ghost" onClick={handleClose} disabled={isLoading}>
           Cancel
         </CButton>
-        <CButton color="primary" onClick={handleSubmit}>
-          {editingAdmin ? 'Update Admin' : 'Add Admin'}
+        <CButton color="primary" onClick={handleSubmit} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <CSpinner size="sm" className="me-2" />
+              {editingAdmin ? 'Updating...' : 'Adding...'}
+            </>
+          ) : (
+            editingAdmin ? 'Update Admin' : 'Add Admin'
+          )}
         </CButton>
       </CModalFooter>
     </CModal>
