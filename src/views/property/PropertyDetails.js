@@ -1,84 +1,73 @@
 import React, { useState } from 'react';
-import { CButton, CModal, CModalBody, CModalHeader, CModalTitle } from '@coreui/react';
-import { CIcon } from '@coreui/icons-react';
-import { cilFullscreen } from '@coreui/icons';
+import { CModal, CModalHeader, CModalBody, CModalTitle } from '@coreui/react';
+import PropertyPhotoModal from './PropertyPhotoModal';
 
-const PropertyDetails = ({ viewingProperty, handlePhotoDelete, handlePhotoUpdate }) => {
-  const [expandedImage, setExpandedImage] = useState(null); // State to hold the image to be displayed in full-screen
-  const [isFullscreenModalVisible, setFullscreenModalVisible] = useState(false); // Modal visibility state
+const PropertyDetails = ({
+  visible,
+  setVisible,
+  viewingProperty,
+  handlePhotoDelete,
+  handlePhotoUpdate,
+}) => {
+  const [expandedImage, setExpandedImage] = useState(null);
+  const [isFullscreenModalVisible, setFullscreenModalVisible] = useState(false);
+  const [photoToUpdate, setPhotoToUpdate] = useState(null);
+  const [newPhoto, setNewPhoto] = useState(null);
 
-  // Handle expand image to full-screen
+  // Handle image expansion
   const handleExpandImage = (photo) => {
     setExpandedImage(photo);
-    setFullscreenModalVisible(true); // Show the full-screen modal
+    setFullscreenModalVisible(true);
   };
 
-  // Handle closing the full-screen modal
+  // Close the full-screen modal
   const handleCloseFullscreen = () => {
     setFullscreenModalVisible(false);
-    setExpandedImage(null); // Reset the expanded image
+    setExpandedImage(null);
   };
 
-  return (
-    <div>
-      {viewingProperty.photos && viewingProperty.photos.length > 0 ? (
-        viewingProperty.photos.map((photo, index) => (
-          <div key={index} className="photo-container" style={{ marginBottom: '10px' }}>
-            <img
-              src={`http://localhost:4000/api/v1/properties/${viewingProperty._id}/photos/${photo}`}
-              alt={`Property Photo ${index + 1}`}
-              style={{ width: '100%', maxWidth: '200px', margin: '5px' }}
-            />
-            <div className="photo-buttons">
-              <CButton
-                color="light"
-                size="sm"
-                onClick={() => handlePhotoDelete(photo)}
-                className="me-2"
-              >
-                <CIcon icon={cilTrash} />
-              </CButton>
-              <CButton
-                color="light"
-                size="sm"
-                onClick={() => {
-                  setPhotoToUpdate(photo);
-                  setNewPhoto(null);
-                }}
-              >
-                <CIcon icon={cilPencil} />
-              </CButton>
-              {/* Add button to expand image */}
-              <CButton
-                color="light"
-                size="sm"
-                onClick={() => handleExpandImage(photo)}
-              >
-                <CIcon icon={cilFullscreen} />
-              </CButton>
-            </div>
-          </div>
-        ))
-      ) : (
-        <p>No photos available</p>
-      )}
+  // Handle new photo selection
+  const handlePhotoChange = (e) => {
+    setNewPhoto(e.target.files[0]);
+  };
 
-      {/* Full-Screen Image Modal */}
-      <CModal visible={isFullscreenModalVisible} onClose={handleCloseFullscreen} size="lg">
+  if (!viewingProperty) return null;
+
+  return (
+    <>
+      {/* Viewing Property Details Modal */}
+      <CModal visible={visible} onClose={() => setVisible(false)}>
         <CModalHeader>
-          <CModalTitle>Full-Screen Image</CModalTitle>
+          <CModalTitle>Property Details</CModalTitle>
         </CModalHeader>
         <CModalBody>
-          {expandedImage && (
-            <img
-              src={`http://localhost:4000/api/v1/properties/${viewingProperty._id}/photos/${expandedImage}`}
-              alt="Expanded Property Photo"
-              style={{ width: '100%' }}
-            />
-          )}
+          <p><strong>Title:</strong> {viewingProperty.title}</p>
+          <p><strong>Description:</strong> {viewingProperty.description}</p>
+          <p><strong>Address:</strong> {viewingProperty.address}</p>
+          <p><strong>Property Type:</strong> {viewingProperty.propertyType}</p>
+          <p><strong>Price:</strong> ${viewingProperty.price}</p>
+          <p><strong>Rent Price:</strong> ${viewingProperty.rentPrice || 'N/A'}</p>
+          <p><strong>Number of Units:</strong> {viewingProperty.numberOfUnits}</p>
+          <p><strong>Floor Plan:</strong> {viewingProperty.floorPlan || 'N/A'}</p>
+          <p><strong>Amenities:</strong> {viewingProperty.amenities?.join(', ') || 'None'}</p>
+          <p><strong>Photos:</strong></p>
+          <PropertyPhotoModal
+            isFullscreenModalVisible={isFullscreenModalVisible}
+            expandedImage={expandedImage}
+            viewingProperty={viewingProperty}
+            handleCloseFullscreen={handleCloseFullscreen}
+            handleExpandImage={handleExpandImage}
+            handlePhotoDelete={handlePhotoDelete}
+            handlePhotoUpdate={handlePhotoUpdate}
+            photoToUpdate={photoToUpdate}
+            setPhotoToUpdate={setPhotoToUpdate}
+            newPhoto={newPhoto}
+            setNewPhoto={setNewPhoto}
+            handlePhotoChange={handlePhotoChange}
+          />
         </CModalBody>
       </CModal>
-    </div>
+    </>
   );
 };
 

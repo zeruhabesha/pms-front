@@ -46,6 +46,16 @@ export const uploadUserPhoto = createAsyncThunk(
   }
 );
 
+export const updateUserPermissions = createAsyncThunk(
+  'user/updatePermissions',
+  async ({ userId, permissions }, { rejectWithValue }) => {
+    try {
+      return await UserService.updatePermissions(userId, permissions);
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 export const deleteUser = createAsyncThunk(
   'user/delete',
   async (id, { rejectWithValue }) => {

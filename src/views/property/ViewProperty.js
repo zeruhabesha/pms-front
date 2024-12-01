@@ -17,7 +17,7 @@ import {
 } from '@coreui/react';
 import { CIcon } from '@coreui/icons-react';
 import { cilList, cilTrash, cilPencil, cilFullscreen } from '@coreui/icons';
-
+import PropertyDetails from './PropertyDetails';
 import PropertyTable from './PropertyTable';
 import AddProperty from './AddProperty';
 import PropertyDeleteModal from './PropertyDeleteModal';
@@ -110,33 +110,30 @@ const ViewProperty = () => {
   // Handlers for photo update/delete
   const handlePhotoDelete = async (photo) => {
     try {
-      await dispatch(deletePropertyPhoto(viewingProperty._id, photo)); // Replace with your action
-      setViewingProperty(prev => ({
+      await dispatch(deletePropertyPhoto(viewingProperty._id, photo)); // Replace with actual action
+      setViewingProperty((prev) => ({
         ...prev,
-        photos: prev.photos.filter(p => p !== photo)
+        photos: prev.photos.filter((p) => p !== photo),
       }));
     } catch (error) {
       console.error("Error deleting photo", error);
     }
   };
-
-  const handlePhotoUpdate = async () => {
-    if (newPhoto) {
-      try {
-        const formData = new FormData();
-        formData.append("photo", newPhoto);
-        await dispatch(updatePropertyPhoto(viewingProperty._id, formData)); // Replace with your action
-        setViewingProperty(prev => ({
-          ...prev,
-          photos: prev.photos.map(photo =>
-            photo === photoToUpdate ? newPhoto.name : photo // Replace with updated photo name
-          )
-        }));
-        setPhotoToUpdate(null);
-        setNewPhoto(null);
-      } catch (error) {
-        console.error("Error updating photo", error);
-      }
+  
+  const handlePhotoUpdate = async (photoToUpdate, newPhoto) => {
+    const formData = new FormData();
+    formData.append("photo", newPhoto); // Append new photo to FormData
+  
+    try {
+      await dispatch(updatePropertyPhoto(viewingProperty._id, formData)); // Replace with actual action
+      setViewingProperty((prev) => ({
+        ...prev,
+        photos: prev.photos.map((photo) =>
+          photo === photoToUpdate ? newPhoto.name : photo // Replace old photo with new photo name
+        ),
+      }));
+    } catch (error) {
+      console.error("Error updating photo", error);
     }
   };
 
@@ -156,51 +153,67 @@ const ViewProperty = () => {
 
   return (
     <CRow>
-      <CCol xs={12}>
-        <CCard className="mb-4">
-          <CCardHeader className="d-flex justify-content-between align-items-center">
-            <strong>Properties</strong>
-            <div id="container">
-              <button className="learn-more" onClick={handleAddProperty}>
+    <CCol xs={12}>
+      <CCard className="mb-4">
+        <CCardHeader className="d-flex justify-content-between align-items-center">
+          <strong>Properties</strong>
+          <button className="learn-more" onClick={handleAddProperty}>
                 <span className="circle" aria-hidden="true">
                   <span className="icon arrow"></span>
                 </span>
                 <span className="button-text">Add Property</span>
               </button>
-            </div>
-          </CCardHeader>
-          <CCardBody>
-            <CFormInput
-              type="text"
-              placeholder="Search by title or property type"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="mb-3"
+        </CCardHeader>
+        <CCardBody>
+          <CFormInput
+            type="text"
+            placeholder="Search by title or property type"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="mb-3"
+          />
+          {loading ? (
+            <div>Loading...</div>
+          ) : error ? (
+            <div>Error: {error}</div>
+          ) : currentProperties.length > 0 ? (
+            <PropertyTable
+              properties={currentProperties}
+              onEdit={handleEdit}
+              onDelete={openDeleteModal}
+              onView={handleView}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              totalPages={totalPages}
+              itemsPerPage={itemsPerPage}
             />
-            {loading ? (
-              <div>Loading...</div>
-            ) : error ? (
-              <div>Error: {error}</div>
-            ) : currentProperties.length > 0 ? (
-              <PropertyTable
-                properties={currentProperties}
-                onEdit={handleEdit}
-                onDelete={openDeleteModal}
-                onView={handleView}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                totalPages={totalPages}
-                itemsPerPage={itemsPerPage}
-              />
-            ) : (
-              <div>No properties found</div>
-            )}
-          </CCardBody>
-        </CCard>
-      </CCol>
+          ) : (
+            <div>No properties found</div>
+          )}
+        </CCardBody>
+      </CCard>
+    </CCol>
 
+
+ {/* Insert PropertyDetails Component */}
+ <PropertyDetails
+        visible={viewModal}
+        setVisible={setViewModal}
+        viewingProperty={viewingProperty}
+        handlePhotoDelete={handlePhotoDelete}
+        handlePhotoUpdate={handlePhotoUpdate}
+      />
+
+      {/* Add Property Modal */}
+      {propertyModalVisible && (
+        <AddProperty
+          visible={propertyModalVisible}
+          setVisible={setPropertyModalVisible}
+          editingProperty={editingProperty}
+        />
+      )}
       {/* Viewing Property Details Modal */}
-      {viewingProperty && (
+      {/* {viewingProperty && (
         <CModal visible={viewModal} onClose={() => setViewModal(false)}>
           <CModalHeader>
             <CModalTitle>Property Details</CModalTitle>
@@ -262,7 +275,7 @@ const ViewProperty = () => {
             </div>
           </CModalBody>
         </CModal>
-      )}
+      )} */}
 
       {/* Full-Screen Image Modal */}
       <CModal visible={isFullscreenModalVisible} onClose={handleCloseFullscreen} size="lg">
@@ -298,16 +311,16 @@ const ViewProperty = () => {
       </CModal>
 
       {/* Add Property Modal */}
-      {propertyModalVisible && (
+      {/* {propertyModalVisible && (
         <AddProperty
           visible={propertyModalVisible}
           setVisible={setPropertyModalVisible}
           editingProperty={editingProperty}
         />
-      )}
+      )} */}
 
-      {/* Delete Property Modal */}
-      <PropertyDeleteModal
+     {/* Delete Property Modal */}
+     <PropertyDeleteModal
         visible={deleteModalVisible}
         setDeleteModalVisible={setDeleteModalVisible}
         propertyToDelete={propertyToDelete}

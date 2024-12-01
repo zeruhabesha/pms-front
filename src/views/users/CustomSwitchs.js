@@ -13,7 +13,7 @@ const CustomSwitch = ({ label, name, checked, onChange }) => {
         checked={checked}  // Show the current state of the switch (checked or unchecked)
         onChange={onChange} // Handle toggling the switch
         label={label}  // Display label beside the switch
-        color="primary"
+        color="dark"
       />
     </CCol>
   );

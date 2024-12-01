@@ -1,5 +1,4 @@
-// agreement.service.js
-import httpCommon from '../http-common';
+import httpCommon from "../http-common";
 
 class AgreementService {
   constructor() {
@@ -7,47 +6,41 @@ class AgreementService {
   }
 
   getAuthHeader() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     return {
       Authorization: `Bearer ${token}`,
     };
   }
 
-  async fetchAgreements(page = 1, limit = 5, searchTerm = '') {
+  async fetchAgreements(page = 1, limit = 5, searchTerm = "") {
     try {
-      const response = await httpCommon.get('/lease', {
+      const response = await httpCommon.get(`/lease`, {
         params: { page, limit, search: searchTerm },
         headers: this.getAuthHeader(),
       });
-  
-      // Log the raw response for debugging
-      console.log('Raw API response:', response.data);
-  
-      // Extract the relevant data from the response
-      if (response.data && response.data.status === 'success' && response.data.data) {
-        return response.data.data; // Return the extracted data
+
+      if (response.data?.status === "success" && response.data.data) {
+        return response.data.data;
       } else {
-        throw new Error('Unexpected API response format');
+        throw new Error("Unexpected API response format");
       }
     } catch (error) {
-      console.error('Error fetching agreements:', error.response?.data || error.message);
+      console.error("Error fetching agreements:", error.response?.data || error.message);
       throw this.handleError(error);
     }
   }
-  
-  
-  
 
   async addAgreement(agreementData) {
     try {
-      const response = await httpCommon.post('/lease', agreementData, {
+      const response = await httpCommon.post(`/lease`, agreementData, {
         headers: {
           ...this.getAuthHeader(),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
       return response.data?.data;
     } catch (error) {
+      console.error("Error adding agreement:", error.response?.data || error.message);
       throw this.handleError(error);
     }
   }
@@ -57,11 +50,12 @@ class AgreementService {
       const response = await httpCommon.put(`/lease/${id}`, agreementData, {
         headers: {
           ...this.getAuthHeader(),
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
       return response.data?.data;
     } catch (error) {
+      console.error("Error updating agreement:", error.response?.data || error.message);
       throw this.handleError(error);
     }
   }
@@ -73,6 +67,7 @@ class AgreementService {
       });
       return id;
     } catch (error) {
+      console.error("Error deleting agreement:", error.response?.data || error.message);
       throw this.handleError(error);
     }
   }

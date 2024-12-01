@@ -1,245 +1,134 @@
 import httpCommon from '../http-common';
+import { encryptData, decryptData } from '../utils/crypto';
 
 class TenantService {
   constructor() {
     this.baseURL = `${httpCommon.defaults.baseURL}/tenants`;
+    this.CACHE_KEY = 'tenant_cache';
+    this.CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   }
 
-  getAuthHeader() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return this.handleError(new Error('No authentication token found'));
+  // Cache utilities
+  setCacheData(key, data) {
+    const cacheItem = { data, timestamp: Date.now() };
+    localStorage.setItem(key, encryptData(cacheItem));
+  }
+
+  getCacheData(key) {
+    try {
+      const encryptedCache = localStorage.getItem(key);
+      if (!encryptedCache) return null;
+
+      const cache = decryptData(encryptedCache);
+      if (Date.now() - cache.timestamp > this.CACHE_DURATION) {
+        localStorage.removeItem(key);
+        return null;
+      }
+
+      return cache.data;
+    } catch {
+      return null;
     }
-    return {
-      Authorization: `Bearer ${token}`,
-    };
+  }
+
+  clearCache() {
+    localStorage.removeItem(this.CACHE_KEY);
   }
 
   handleError(error) {
-    const errorMessage = error.response?.data?.message || error.message || 'An unknown error occurred';
-    const errorStatus = error.response?.status || 500;
-    const errorDetails = error.response?.data?.details || {};
-  
-    console.error('API Error:', {
-      message: errorMessage,
-      status: errorStatus,
-      details: errorDetails,
-      stack: error.stack
-    });
-  
-    if (errorStatus === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-      return;
-    }
-  
-    return {
-      error: true,
-      message: errorMessage,
-      status: errorStatus,
-      details: errorDetails
-    };
+    const errorMessage =
+      error.response?.data?.message || error.message || 'An unknown error occurred';
+    console.error('API Error:', errorMessage);
+    return Promise.reject(new Error(errorMessage));
   }
 
-  validateTenantData(tenantData) {
-    const requiredFields = ['tenantName', 'email'];
-    const missingFields = requiredFields.filter(field => !tenantData[field]);
-    
-    if (missingFields.length > 0) {
-      return {
-        isValid: false,
-        error: `Missing required fields: ${missingFields.join(', ')}`
-      };
+  // CRUD operations
+  async fetchTenants(page = 1, limit = 10, search = '') {
+    const cacheKey = `${this.CACHE_KEY}_${page}_${limit}_${search}`;
+    const cachedData = this.getCacheData(cacheKey);
+
+    if (cachedData && !search) {
+      return cachedData;
     }
 
-    if (tenantData.email && !this.isValidEmail(tenantData.email)) {
-      return {
-        isValid: false,
-        error: 'Invalid email format'
-      };
-    }
-
-    return { isValid: true };
-  }
-
-  isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-
-  async fetchTenants(page = 1, limit = 5, searchTerm = '') {
     try {
       const response = await httpCommon.get(this.baseURL, {
-        headers: this.getAuthHeader(),
-        params: {
-          page,
-          limit,
-          search: searchTerm,
-        },
+        params: { page, limit, search },
       });
 
-      const { data } = response.data;
-      return {
-        tenants: data.tenants || [],
-        totalPages: data.totalPages || 1,
-        totalTenants: data.totalTenants || 0,
-        currentPage: data.currentPage || page,
+      const result = {
+        tenants: response.data?.data?.tenants || [],
+        totalPages: response.data?.data?.totalPages || 1,
+        currentPage: response.data?.data?.currentPage || page,
+        totalTenants: response.data?.data?.totalTenants || 0,
       };
+
+      if (!search) this.setCacheData(cacheKey, result);
+      return result;
     } catch (error) {
       return this.handleError(error);
     }
   }
 
   async addTenant(tenantData) {
-    // Validate tenant data before sending request
-    const validation = this.validateTenantData(tenantData);
-    if (!validation.isValid) {
-      return this.handleError(new Error(validation.error));
-    }
-
     try {
-      // Clean and prepare the data
-      const cleanedData = {
-        ...tenantData,
-        email: tenantData.email.toLowerCase().trim(),
-        tenantName: tenantData.tenantName.trim(),
-        phone: tenantData.phone?.trim() || '',
-        address: tenantData.address?.trim() || '',
-      };
-
-      const response = await httpCommon.post(this.baseURL, cleanedData, {
-        headers: {
-          ...this.getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-        timeout: 10000, // 10 second timeout
-      });
-
-      if (!response.data) {
-        throw new Error('No data received from server');
-      }
-
-      return {
-        success: true,
-        data: response.data,
-        message: 'Tenant created successfully'
-      };
+      const response = await httpCommon.post(this.baseURL, tenantData);
+      this.clearCache(); // Clear cache for updated tenant list
+      return response.data; // Ensure data consistency
     } catch (error) {
-      // Check for specific error types
-      if (error.code === 'ECONNABORTED') {
-        return this.handleError(new Error('Request timed out. Please try again.'));
-      }
-
-      if (error.response?.status === 409) {
-        return this.handleError(new Error('A tenant with this email already exists.'));
-      }
-
-      if (error.response?.status === 413) {
-        return this.handleError(new Error('The data submitted is too large.'));
-      }
-
       return this.handleError(error);
     }
   }
-
   
-
   async updateTenant(id, tenantData) {
-    if (!id) {
-      return this.handleError(new Error('Tenant ID is required'));
-    }
-  
     try {
-      const response = await httpCommon.put(`${this.baseURL}/${id}`, tenantData, {
-        headers: {
-          ...this.getAuthHeader(),
-          'Content-Type': 'application/json',
-        },
-      });
-      return {
-        success: true,
-        data: response.data
-      };
+      const response = await httpCommon.put(`${this.baseURL}/${id}`, tenantData);
+      this.clearCache(); // Clear cache for updated tenant data
+      return response.data; // Ensure data consistency
     } catch (error) {
       return this.handleError(error);
     }
   }
-  
-  
+
+  async deleteTenant(id) {
+    try {
+      await httpCommon.delete(`${this.baseURL}/${id}`);
+      this.clearCache();
+      return { success: true, id };
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
 
   async uploadPhoto(id, photo) {
     if (!id || !photo) {
-      return this.handleError(new Error('Both tenant ID and photo are required'));
+      throw new Error('Both tenant ID and photo are required');
     }
   
-    try {
-      // Validate photo size and type
-      if (photo.size > 5 * 1024 * 1024) { // 5MB limit
-        throw new Error('Photo size must be less than 5MB');
-      }
-
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-      if (!allowedTypes.includes(photo.type)) {
-        throw new Error('Only JPG, JPEG, and PNG files are allowed');
-      }
-
-      const formData = new FormData();
-      formData.append('photo', photo);
+    const formData = new FormData();
+    formData.append('photo', photo);
   
-      const response = await httpCommon.post(`${this.baseURL}/${id}/photo`, formData, {
-        headers: {
-          ...this.getAuthHeader(),
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: progressEvent => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log('Upload progress:', percentCompleted);
-        },
-      });
-      
-      return {
-        success: true,
-        data: response.data,
-        photoUrl: response.data?.photoUrl,
-        message: 'Photo uploaded successfully'
-      };
-    } catch (error) {
-      return this.handleError(error);
-    }
+    const response = await httpCommon.post(`${this.baseURL}/${id}/photo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  
+    return response;
   }
   
-
-  async deleteTenant(id) {
-    if (!id) {
-      return this.handleError(new Error('Tenant ID is required'));
-    }
-    
-    try {
-      const response = await httpCommon.delete(`${this.baseURL}/${id}`, {
-        headers: this.getAuthHeader(),
-      });
-      return {
-        success: true,
-        data: response.data
-      };
-    } catch (error) {
-      return this.handleError(error);
-    }
-  }
 
   async getTenantById(id) {
-    if (!id) {
-      return this.handleError(new Error('Tenant ID is required'));
+    const cacheKey = `${this.CACHE_KEY}_detail_${id}`;
+    const cachedData = this.getCacheData(cacheKey);
+
+    if (cachedData) {
+      return cachedData;
     }
 
     try {
-      const response = await httpCommon.get(`${this.baseURL}/${id}`, {
-        headers: this.getAuthHeader(),
-      });
-      return {
-        success: true,
-        data: response.data?.data
-      };
+      const response = await httpCommon.get(`${this.baseURL}/${id}`);
+      const data = response.data;
+      this.setCacheData(cacheKey, data);
+      return data;
     } catch (error) {
       return this.handleError(error);
     }

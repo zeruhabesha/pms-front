@@ -1,23 +1,25 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import MaintenanceService from '../services/maintenance.service';
 
-// Fetch maintenance records with pagination and search
 export const fetchMaintenance = createAsyncThunk(
   'maintenance/fetchMaintenance',
   async ({ page = 1, limit = 5, search = '' }, { rejectWithValue }) => {
     try {
       const response = await MaintenanceService.fetchMaintenance(page, limit, search);
       return {
-        maintenanceRecords: response.maintenanceRecords,
+        maintenanceRequests: response.maintenanceRequests,
         totalPages: response.totalPages,
         currentPage: response.currentPage,
-        totalRecords: response.totalRecords,
+        totalMaintenanceRequests: response.totalMaintenanceRequests,
       };
     } catch (error) {
-      return rejectWithValue(error.message || 'Failed to fetch maintenance records');
+      return rejectWithValue(
+        error.response?.data?.message || error.message || 'Failed to fetch maintenance requests'
+      );
     }
   }
 );
+
 
 
 // Add a new maintenance record
@@ -77,3 +79,20 @@ export const deleteMaintenance = createAsyncThunk(
     }
   }
 );
+
+
+// Update a photo or media for a maintenance record
+export const updateMaintenancePhoto = createAsyncThunk(
+  'maintenance/updateMaintenancePhoto',
+  async ({ id, photoData }, { rejectWithValue }) => {
+    try {
+      const response = await MaintenanceService.updateMaintenancePhoto(id, photoData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || { message: 'Failed to update maintenance photo' }
+      );
+    }
+  }
+);
+

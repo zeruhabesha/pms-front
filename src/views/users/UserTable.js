@@ -16,6 +16,9 @@ import { CIcon } from '@coreui/icons-react';
 import { cilPencil, cilTrash, cilCheckCircle, cilXCircle, cilPlus, cilMinus, cilShieldAlt } from '@coreui/icons';
 import placeholder from '../image/placeholder.png';
 import PermissionsModal from './PermissionsModal'; 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { useDispatch } from 'react-redux';
 
 const UserTable = ({
   users,
@@ -33,6 +36,7 @@ const UserTable = ({
   const [expandedRows, setExpandedRows] = useState({});
   const [permissionsModalVisible, setPermissionsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const dispatch = useDispatch();
 
   const toggleRow = (userId) => {
     setExpandedRows(prev => ({
@@ -152,7 +156,18 @@ const UserTable = ({
     setSelectedUser(null);
   };
 
-
+  const handlePermissionsSave = async (updatedUser) => {
+    try {
+      await dispatch(updateUserPermissions({ userId: updatedUser._id, permissions: updatedUser.permissionStatus })).unwrap();
+      toast.success('Permissions updated successfully!');
+      setPermissionsModalVisible(false);
+      dispatch(fetchUsers({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+    } catch (error) {
+      toast.error('Failed to update permissions');
+    }
+  };
+  
+  
   const renderExpandedContent = (user) => (
     <CTableRow>
       <CTableDataCell colSpan="7">
@@ -287,16 +302,26 @@ const UserTable = ({
 
       {/* Permissions Modal */}
       {selectedUser && (
+        // <PermissionsModal
+        //   visible={permissionsModalVisible}
+        //   user={selectedUser}
+        //   onClose={handlePermissionsClose}
+        //   onSavePermissions={(user) => {
+        //     console.log('Permissions saved for user:', user);
+        //     handlePermissionsClose();
+        //   }}
+        // />
         <PermissionsModal
-          visible={permissionsModalVisible}
-          user={selectedUser}
-          onClose={handlePermissionsClose}
-          onSavePermissions={(user) => {
-            console.log('Permissions saved for user:', user);
-            handlePermissionsClose();
-          }}
-        />
+  visible={permissionsModalVisible}
+  user={selectedUser}
+  onClose={handlePermissionsClose}
+  handleSavePermissions={handlePermissionsSave} // Pass the correct function
+/>
+
       )}
+
+<ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+
     </div>
   );
 };

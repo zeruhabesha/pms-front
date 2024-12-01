@@ -1,25 +1,26 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchMaintenance, addMaintenance, updateMaintenance, uploadMaintenanceMedia, deleteMaintenance } from '../actions/MaintenanceActions';
+import {
+  fetchMaintenance,
+  addMaintenance,
+  updateMaintenance,
+  deleteMaintenance,
+} from '../actions/MaintenanceActions';
 
 const initialState = {
-  maintenanceRecords: [],
+  maintenanceRequests: [], // Updated field
   loading: false,
   error: null,
   totalPages: 1,
   currentPage: 1,
-  totalRecords: 0,
-  selectedMaintenance: null,
+  totalMaintenanceRequests: 0, // Total count from the response
 };
 
-const MaintenanceSlice = createSlice({
+const maintenanceSlice = createSlice({
   name: 'maintenance',
   initialState,
   reducers: {
     clearError: (state) => {
       state.error = null;
-    },
-    setSelectedMaintenance: (state, action) => {
-      state.selectedMaintenance = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -30,78 +31,37 @@ const MaintenanceSlice = createSlice({
       })
       .addCase(fetchMaintenance.fulfilled, (state, action) => {
         state.loading = false;
-        state.maintenanceRecords = action.payload.maintenanceRecords;
+        state.maintenanceRequests = action.payload.maintenanceRequests;
         state.totalPages = action.payload.totalPages;
         state.currentPage = action.payload.currentPage;
-        state.totalRecords = action.payload.totalRecords;
+        state.totalMaintenanceRequests = action.payload.totalMaintenanceRequests;
+        state.error = null;
       })
       .addCase(fetchMaintenance.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      })
-
-      // Add Maintenance
-      .addCase(addMaintenance.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.maintenanceRequests = [];
       })
       .addCase(addMaintenance.fulfilled, (state, action) => {
-        state.loading = false;
-        state.maintenanceRecords.push(action.payload);
-      })
-      .addCase(addMaintenance.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // Update Maintenance
-      .addCase(updateMaintenance.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.maintenanceRequests = [action.payload, ...state.maintenanceRequests];
+        state.totalMaintenanceRequests += 1;
       })
       .addCase(updateMaintenance.fulfilled, (state, action) => {
-        state.loading = false;
-        const index = state.maintenanceRecords.findIndex(
-          (record) => record._id === action.payload._id
+        const index = state.maintenanceRequests.findIndex(
+          (request) => request._id === action.payload._id
         );
         if (index !== -1) {
-          state.maintenanceRecords[index] = action.payload;
+          state.maintenanceRequests[index] = action.payload;
         }
-      })
-      .addCase(updateMaintenance.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-
-      // Upload Media
-      .addCase(uploadMaintenanceMedia.fulfilled, (state, action) => {
-        const { id, mediaUrl } = action.payload;
-        const maintenance = state.maintenanceRecords.find((record) => record._id === id);
-        if (maintenance) {
-          maintenance.mediaUrl = mediaUrl;
-        }
-      })
-      .addCase(uploadMaintenanceMedia.rejected, (state, action) => {
-        state.error = action.payload || 'Failed to upload media';
-      })
-
-      // Delete Maintenance
-      .addCase(deleteMaintenance.pending, (state) => {
-        state.loading = true;
-        state.error = null;
       })
       .addCase(deleteMaintenance.fulfilled, (state, action) => {
-        state.loading = false;
-        state.maintenanceRecords = state.maintenanceRecords.filter(
-          (record) => record._id !== action.payload
+        state.maintenanceRequests = state.maintenanceRequests.filter(
+          (request) => request._id !== action.payload
         );
-      })
-      .addCase(deleteMaintenance.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || 'An error occurred';
+        state.totalMaintenanceRequests -= 1;
       });
   },
 });
 
-export const { resetState, setSelectedMaintenance, clearError } = MaintenanceSlice.actions;
-export default MaintenanceSlice.reducer;
+export const { clearError } = maintenanceSlice.actions;
+export default maintenanceSlice.reducer;

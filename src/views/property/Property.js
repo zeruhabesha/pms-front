@@ -4,9 +4,7 @@ import ViewProperty from './ViewProperty'
 const Property = () => {
   return (
     <div>
-        <ViewProperty />
-
-        
+        <ViewProperty />    
     </div>
   )
 }

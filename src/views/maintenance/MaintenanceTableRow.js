@@ -1,5 +1,5 @@
-// MaintenanceTableRow.js
-import React, { useState } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import {
   CTableRow,
   CTableHeaderCell,
@@ -7,60 +7,81 @@ import {
   CButton,
 } from '@coreui/react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faEyeSlash, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 
-const MaintenanceTableRow = ({ maintenance, index, onEdit, onDelete, expandedRows, toggleRowExpansion }) => {
-  const [isExpanded, setIsExpanded] = useState(expandedRows[maintenance.id]);
+const MaintenanceTableRow = ({ maintenance, index, onEdit, onDelete, onViewDetails }) => {
+  const {
+    tenant = 'N/A',
+    property = 'N/A',
+    typeOfRequest = 'N/A',
+    urgencyLevel = 'N/A',
+    status = 'Unknown',
+  } = maintenance || {};
 
-  const handleMore = () => {
-    toggleRowExpansion(maintenance.id);
-    setIsExpanded(!isExpanded);
+  // Dynamic style for status
+  const statusStyles = {
+    Pending: { backgroundColor: 'orange', color: 'white' },
+    'In Progress': { backgroundColor: 'blue', color: 'white' },
+    Completed: { backgroundColor: 'green', color: 'white' },
+    default: { backgroundColor: 'gray', color: 'white' },
   };
 
-  return (
-    <>
-      <CTableRow>
-        <CTableHeaderCell scope="row">{index}</CTableHeaderCell>
-        <CTableDataCell>{maintenance.tenant}</CTableDataCell>
-        <CTableDataCell>{maintenance.property}</CTableDataCell>
-        <CTableDataCell>{maintenance.typeOfRequest}</CTableDataCell>
-        <CTableDataCell>{maintenance.urgencyLevel}</CTableDataCell>
-        <CTableDataCell>
-          <span style={{ backgroundColor: maintenance.status === 'Pending' ? 'orange' : 'green', color: 'white', padding: '5px 10px', borderRadius: '5px' }}>
-            {maintenance.status}
-          </span>
-        </CTableDataCell>
-        <CTableDataCell>
-          <CButton color="secondary" size="sm" onClick={handleMore}>
-            <FontAwesomeIcon icon={isExpanded ? faEyeSlash : faEye} />
-          </CButton>
-          <CButton color="secondary" size="sm" onClick={() => onEdit(maintenance)}>
-            <FontAwesomeIcon icon={faEdit} />
-          </CButton>
-          <CButton color="danger" size="sm" onClick={() => onDelete(maintenance.id)}>
-            <FontAwesomeIcon icon={faTrash} />
-          </CButton>
-        </CTableDataCell>
-      </CTableRow>
+  const statusStyle = statusStyles[status] || statusStyles.default;
 
-      {isExpanded && (
-        <CTableRow>
-          <CTableDataCell colSpan={8}>
-            <h4>Description:</h4>
-            {maintenance.description}
-            <h4>Photos:</h4>
-            {maintenance.photos.map((photo, idx) => (
-              <img key={idx} src={photo} alt={`Photo ${idx}`} style={{ width: '50px', height: '50px', marginRight: '10px' }} />
-            ))}
-            <h4>Video:</h4>
-            <video controls style={{ width: '100%' }}>
-              <source src={maintenance.video} type="video/mp4" />
-            </video>
-          </CTableDataCell>
-        </CTableRow>
-      )}
-    </>
+  return (
+    <CTableRow>
+      <CTableHeaderCell scope="row">{index + 1}</CTableHeaderCell>
+      <CTableDataCell>{tenant}</CTableDataCell>
+      <CTableDataCell>{property}</CTableDataCell>
+      <CTableDataCell>{typeOfRequest}</CTableDataCell>
+      <CTableDataCell>{urgencyLevel}</CTableDataCell>
+      <CTableDataCell>
+        <span
+          style={{
+            ...statusStyle,
+            padding: '5px 10px',
+            borderRadius: '5px',
+            fontSize: '12px',
+          }}
+        >
+          {status}
+        </span>
+      </CTableDataCell>
+      <CTableDataCell>
+        <CButton
+          color="secondary"
+          size="sm"
+          onClick={() => onViewDetails(maintenance)}
+          className="me-2"
+        >
+          <FontAwesomeIcon icon={faEye} />
+        </CButton>
+        <CButton
+          color="secondary"
+          size="sm"
+          onClick={() => onEdit(maintenance)}
+          className="me-2"
+        >
+          <FontAwesomeIcon icon={faEdit} />
+        </CButton>
+        <CButton
+          color="danger"
+          size="sm"
+          onClick={() => onDelete(maintenance)}
+        >
+          <FontAwesomeIcon icon={faTrash} />
+        </CButton>
+      </CTableDataCell>
+    </CTableRow>
   );
+};
+
+MaintenanceTableRow.propTypes = {
+  maintenance: PropTypes.object.isRequired,
+  index: PropTypes.number.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  onViewDetails: PropTypes.func.isRequired,
 };
 
 export default MaintenanceTableRow;

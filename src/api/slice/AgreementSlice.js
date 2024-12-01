@@ -1,6 +1,5 @@
-// AgreementSlice.js
-import { createSlice } from '@reduxjs/toolkit';
-import { fetchAgreements, addAgreement, updateAgreement, deleteAgreement } from '../actions/AgreementActions';
+import { createSlice } from "@reduxjs/toolkit";
+import { fetchAgreements, addAgreement, updateAgreement, deleteAgreement } from "../actions/AgreementActions";
 
 const initialState = {
   agreements: [],
@@ -11,7 +10,7 @@ const initialState = {
 };
 
 const AgreementSlice = createSlice({
-  name: 'agreement',
+  name: "agreement",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -22,15 +21,14 @@ const AgreementSlice = createSlice({
       })
       .addCase(fetchAgreements.fulfilled, (state, action) => {
         state.loading = false;
-        state.agreements = action.payload.agreements || []; // Default to empty array
-        state.totalPages = action.payload.totalPages || 1;   // Default to 1
-        state.currentPage = action.payload.currentPage || 1; // Default to 1
+        state.agreements = action.payload.agreements || [];
+        state.totalPages = action.payload.totalPages || 1;
+        state.currentPage = action.payload.currentPage || 1;
       })
       .addCase(fetchAgreements.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload || 'Failed to fetch agreements';
-        console.error('Fetch agreements rejected:', action.payload);
-      })      
+        state.error = action.payload || "Failed to fetch agreements";
+      })
       .addCase(addAgreement.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -43,7 +41,6 @@ const AgreementSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(updateAgreement.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -61,7 +58,6 @@ const AgreementSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
       .addCase(deleteAgreement.pending, (state) => {
         state.loading = true;
         state.error = null;

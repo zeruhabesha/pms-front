@@ -39,7 +39,7 @@ const EditPhotoModal = ({ visible, setVisible, admin, onSavePhoto, isLoading, er
       </CModalHeader>
       <CModalBody className="text-center">
         <img src={previewUrl} className="me-2"  alt="Admin" style={{ width: '150px', height: '150px', borderRadius: '50%', marginBottom: '20px' }} />
-        <CButton color="primary" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+        <CButton color="dark" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
           Select Photo
         </CButton>
         <CFormInput
@@ -55,7 +55,7 @@ const EditPhotoModal = ({ visible, setVisible, admin, onSavePhoto, isLoading, er
         <CButton color="secondary" onClick={() => setVisible(false)}>
           Cancel
         </CButton>
-        <CButton color="primary" onClick={handleSubmit} disabled={!selectedFile || isLoading}>
+        <CButton color="dark" onClick={handleSubmit} disabled={!selectedFile || isLoading}>
           {isLoading ? 'Uploading...' : 'Save Photo'}
         </CButton>
       </CModalFooter>

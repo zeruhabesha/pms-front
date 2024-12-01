@@ -94,7 +94,7 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
       backdrop="static"
       size="lg"
     >
-      <CModalHeader className="bg-primary text-white">
+      <CModalHeader className="bg-dark text-white">
         <CModalTitle>
           {editingSuperAdmin ? 'Edit Super Admin' : 'Add Super Admin'}
         </CModalTitle>
@@ -185,7 +185,7 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
                 <CButton color="secondary" variant="ghost" onClick={handleClose}>
                   Cancel
                 </CButton>
-                <CButton color="primary" type="submit">
+                <CButton color="dark" type="submit">
                   {editingSuperAdmin ? 'Update Super Admin' : 'Add Super Admin'}
                 </CButton>
               </CModalFooter>

@@ -126,7 +126,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
 
   return (
     <CModal visible={visible} onClose={handleClose} alignment="center" backdrop="static" size="lg">
-      <CModalHeader className="bg-secondary text-white">
+      <CModalHeader className="bg-dark text-white">
         <CModalTitle>{editingProperty ? 'Edit Property' : 'Add Property'}</CModalTitle>
       </CModalHeader>
       <CModalBody>
@@ -284,7 +284,7 @@ const AddProperty = ({ visible, setVisible, editingProperty }) => {
                 <CButton color="secondary" variant="" onClick={handleClose}>
                   Cancel
                 </CButton>
-                <CButton color="primary" type="submit" disabled={isSubmitting}>
+                <CButton color="dark" type="submit" disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : editingProperty ? 'Update Property' : 'Add Property'}
                 </CButton>
               </CModalFooter>

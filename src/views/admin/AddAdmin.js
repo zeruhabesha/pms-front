@@ -40,18 +40,19 @@ const AddAdmin = ({ visible, setVisible, editingAdmin = null }) => {
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
+    console.log('Editing Admin:', editingAdmin); // Log for debugging
     if (editingAdmin) {
       setAdminData({
-        name: editingAdmin.name || '',
-        email: editingAdmin.email || '',
+        name: editingAdmin?.name || '',
+        email: editingAdmin?.email || '',
         password: '',
-        role: editingAdmin.role || 'Admin',
-        phoneNumber: editingAdmin.phoneNumber || '',
-        address: editingAdmin.address || '',
-        status: editingAdmin.status === 'active',
-        photo: editingAdmin.photo || '',
-        activeStart: editingAdmin.activeStart ? editingAdmin.activeStart.split('T')[0] : '',
-        activeEnd: editingAdmin.activeEnd ? editingAdmin.activeEnd.split('T')[0] : '',
+        role: editingAdmin?.role || 'Admin',
+        phoneNumber: editingAdmin?.phoneNumber || '',
+        address: editingAdmin?.address || '',
+        status: editingAdmin?.status === 'active',
+        photo: editingAdmin?.photo || '',
+        activeStart: editingAdmin?.activeStart ? editingAdmin.activeStart.split('T')[0] : '',
+        activeEnd: editingAdmin?.activeEnd ? editingAdmin.activeEnd.split('T')[0] : '',
       });
     } else {
       setAdminData({
@@ -69,6 +70,9 @@ const AddAdmin = ({ visible, setVisible, editingAdmin = null }) => {
     }
     setErrorMessage('');
   }, [editingAdmin]);
+  
+  
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -80,7 +84,6 @@ const AddAdmin = ({ visible, setVisible, editingAdmin = null }) => {
   };
 
   const handleSubmit = async () => {
-    // Check required fields
     if (!adminData.name || !adminData.email || (!editingAdmin && !adminData.password)) {
       setErrorMessage('Please fill in all required fields.');
       return;
@@ -89,28 +92,36 @@ const AddAdmin = ({ visible, setVisible, editingAdmin = null }) => {
     try {
       setIsLoading(true);
   
-      // Set status as 'active' or 'inactive'
       const submissionData = {
         ...adminData,
         status: adminData.status ? 'active' : 'inactive',
         phoneNumber: adminData.phoneNumber || '',
         address: adminData.address || '',
+        activeStart: adminData.activeStart || null,
+        activeEnd: adminData.activeEnd || null,
       };
   
       if (editingAdmin && editingAdmin._id) {
-        // If editingAdmin is provided and has an _id, perform update
+        // Update admin
         await dispatch(updateAdmin({ id: editingAdmin._id, adminData: submissionData })).unwrap();
-      } else {
-        // If editingAdmin is not provided, perform add
+      } else if (!editingAdmin) {
+        // Add new admin
         await dispatch(addAdmin(submissionData)).unwrap();
+      } else {
+        throw new Error('Invalid editing admin object.');
       }
+  
       handleClose();
+      toast.success(editingAdmin ? 'Admin updated successfully' : 'Admin added successfully');
     } catch (error) {
       setErrorMessage(error.message || 'Operation failed');
     } finally {
       setIsLoading(false);
     }
   };
+  
+  
+  
   
   
   const handleClose = () => {
@@ -150,7 +161,7 @@ const AddAdmin = ({ visible, setVisible, editingAdmin = null }) => {
 
   return (
     <CModal visible={visible} onClose={handleClose} alignment="center" backdrop="static" size="lg">
-      <CModalHeader className="bg-primary text-white">
+      <CModalHeader className="bg-dark text-white">
         <CModalTitle>{editingAdmin ? 'Edit Admin' : 'Add Admin'}</CModalTitle>
       </CModalHeader>
       <CModalBody>
@@ -269,7 +280,7 @@ const AddAdmin = ({ visible, setVisible, editingAdmin = null }) => {
         <CButton color="secondary" variant="ghost" onClick={handleClose} disabled={isLoading}>
           Cancel
         </CButton>
-        <CButton color="primary" onClick={handleSubmit} disabled={isLoading}>
+        <CButton color="dark" onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? (
             <>
               <CSpinner size="sm" className="me-2" />

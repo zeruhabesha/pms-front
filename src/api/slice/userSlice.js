@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { fetchUsers, addUser, updateUser, uploadUserPhoto, deleteUser } from '../actions/userActions';
+import { fetchUsers, addUser, updateUser, uploadUserPhoto, deleteUser,updateUserPermissions  } from '../actions/userActions';
 
 const initialState = {
   users: [],
@@ -104,6 +104,23 @@ const userSlice = createSlice({
       .addCase(deleteUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      .addCase(updateUserPermissions.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateUserPermissions.fulfilled, (state, action) => {
+        state.loading = false;
+        const updatedUser = action.payload;
+        const index = state.users.findIndex((user) => user._id === updatedUser._id);
+        if (index !== -1) {
+          state.users[index] = updatedUser;
+        }
+      })
+      .addCase(updateUserPermissions.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to update permissions';
       });
   },
 });

@@ -10,6 +10,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import '../Super.scss';
 import TenantPhotoModal from './TenantPhotoModal';
 import debounce from 'lodash/debounce';
+import {
+ uploadUserPhoto,
+} from '../../api/actions/userActions';
 
 const selectTenantState = (state) => state.tenant || {
   tenants: [],
@@ -29,7 +32,7 @@ const ViewTenant = () => {
   const [editingTenant, setEditingTenant] = useState(null);
   const [tenantToDelete, setTenantToDelete] = useState(null);
   const itemsPerPage = 5;
-
+  const [userToEdit, setUserToEdit] = useState(null);
   // Debounced search to avoid firing on every keystroke
   const debouncedSearch = useCallback(
     debounce((term) => {
@@ -50,10 +53,11 @@ const ViewTenant = () => {
   }, [dispatch, currentPage, searchTerm]); // Trigger fetch when page or searchTerm changes
 
   const handlePageChange = (page) => {
-    if (page !== currentPage) {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
       dispatch(fetchTenants({ page, limit: itemsPerPage, searchTerm }));
     }
   };
+  
 
   const handleAddTenant = () => {
     setEditingTenant(null);
@@ -102,32 +106,52 @@ const ViewTenant = () => {
     }
   }
 
-  const handleEditPhoto = (tenant) => {
-    setEditingTenant(tenant); // Set the tenant whose photo needs to be edited
-    setEditPhotoVisible(true); // Show the photo modal
+  // const handleEditPhoto = (tenant) => {
+  //   setEditingTenant(tenant); // Set the tenant whose photo needs to be edited
+  //   setEditPhotoVisible(true); // Show the photo modal
+  // };
+  const handleEditPhoto = (user) => {
+    setUserToEdit(user);
+    setEditPhotoVisible(true);
   };
 
-// In ViewTenant.js, update the handleSavePhoto function:
-
-const handleSavePhoto = async (photoFile) => {
-  if (editingTenant && photoFile) {
-    try {
-      const result = await tenantService.uploadPhoto(editingTenant.id, photoFile);
-      
-      if (result.success) {
-        // Refresh the tenants list
-        dispatch(fetchTenants({ page: currentPage, limit: itemsPerPage, searchTerm }));
-        setEditPhotoVisible(false);
-        setEditingTenant(null);
-        toast.success('Photo updated successfully');
-      } else {
-        throw new Error(result.message || 'Failed to update photo');
-      }
-    } catch (error) {
-      toast.error(error.message || 'Failed to update photo');
+  const handleSavePhoto = async (photoFile) => {
+    if (userToEdit) {
+      await dispatch(uploadUserPhoto({ id: userToEdit._id, photo: photoFile }));
+      // dispatch(fetchUsers({ page: localCurrentPage, limit: itemsPerPage, search: searchTerm }));
+      setEditPhotoVisible(false);
+      toast.success('Photo updated successfully');
     }
-  }
-};
+  };
+// In ViewTenant.js, update the handleSavePhoto function:
+// const handleSavePhoto = async (photoFile) => {
+//   if (userToEdit) {
+//     // if (editingTenant && photoFile) {
+//     await dispatch(uploadUserPhoto({ id: userToEdit._id, photo: photoFile }));
+//     dispatch(fetchUsers({ page: localCurrentPage, limit: itemsPerPage, search: searchTerm }));
+//     setEditPhotoVisible(false);
+//     toast.success('Photo updated successfully');
+//   }
+// };
+// const handleSavePhoto = async (photoFile) => {
+//   if (editingTenant && photoFile) {
+//     try {
+//       const result = await tenantService.uploadPhoto(editingTenant.id, photoFile);
+      
+//       if (result.success) {
+//         // Refresh the tenants list
+//         dispatch(fetchTenants({ page: currentPage, limit: itemsPerPage, searchTerm }));
+//         setEditPhotoVisible(false);
+//         setEditingTenant(null);
+//         toast.success('Photo updated successfully');
+//       } else {
+//         throw new Error(result.message || 'Failed to update photo');
+//       }
+//     } catch (error) {
+//       toast.error(error.message || 'Failed to update photo');
+//     }
+//   }
+// };
   
   
 
@@ -188,13 +212,20 @@ const handleSavePhoto = async (photoFile) => {
       tenantToDelete={tenantToDelete}
       confirmDelete={confirmDelete}
     />
-    <TenantPhotoModal
+    {/* <TenantPhotoModal
       visible={editPhotoVisible}
       setVisible={setEditPhotoVisible}
-      tenant={editingTenant}
+      // tenant={editingTenant}
       handleSave={handleSavePhoto}
-      
-    />
+      admin={userToEdit}
+    /> */}
+    <TenantPhotoModal
+  visible={editPhotoVisible}
+  setVisible={setEditPhotoVisible}
+  admin={userToEdit}
+  onSavePhoto={handleSavePhoto} // Correctly pass the handler here
+/>
+
 
     <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
   </CRow>

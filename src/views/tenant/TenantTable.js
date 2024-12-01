@@ -25,6 +25,7 @@ const TenantTable = ({
   handleEdit,
   handleDelete,
   handlePageChange,
+  itemsPerPage = 5  // Add this prop with a default value
 }) => {
   const [expandedRows, setExpandedRows] = useState({});
   const [tenantPhotos, setTenantPhotos] = useState({});
@@ -37,53 +38,47 @@ const TenantTable = ({
     
     // Fetch photos for all tenants
     const fetchPhotos = async () => {
-      const validTenants = tenants.filter(tenant => tenant && tenant._id);
+      const validTenants = tenants.filter((tenant) => tenant && tenant._id);
       for (const tenant of validTenants) {
-        await fetchTenantPhoto(tenant._id);
+        try {
+          await fetchTenantPhoto(tenant._id);
+        } catch (error) {
+          console.error(`Failed to fetch photo for tenant ID: ${tenant._id}`, error);
+        }
       }
     };
+    
 
     fetchPhotos();
   }, [tenants]);
 
 
   const fetchTenantPhoto = async (tenantId) => {
-    if (photoErrors[tenantId] || tenantPhotos[tenantId]) return;
-
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(`http://localhost:4000/api/v1/tenants/${tenantId}/photos`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      if (!token) throw new Error('Unauthorized');
+  
+      const response = await fetch(`http://localhost:4000/api/v1/tenants/${tenantId}/photo`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        if (blob.size > 0) {
-          const imageUrl = URL.createObjectURL(blob);
-          setTenantPhotos(prev => ({
-            ...prev,
-            [tenantId]: imageUrl
-          }));
-        } else {
-          throw new Error('Empty photo response');
-        }
+  
+      if (!response.ok) {
+        throw new Error(`Failed to fetch photo: ${response.status}`);
+      }
+  
+      const blob = await response.blob();
+      if (blob.size > 0) {
+        const url = URL.createObjectURL(blob);
+        setTenantPhotos((prev) => ({ ...prev, [tenantId]: url }));
       } else {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error('Empty photo response');
       }
     } catch (error) {
-      console.warn(`Photo fetch failed for tenant ${tenantId}:`, error.message);
-      setPhotoErrors(prev => ({
-        ...prev,
-        [tenantId]: true
-      }));
+      console.error('Error fetching tenant photo:', error);
+      setPhotoErrors((prev) => ({ ...prev, [tenantId]: true }));
     }
-  };
+  };  
+  
 
   useEffect(() => {
     return () => {
@@ -108,71 +103,65 @@ const TenantTable = ({
   };
 
   const getPageNumbers = () => {
-    const maxVisiblePages = 5;
+    const maxVisiblePages = 5; // Number of visible pagination buttons
     const pages = [];
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
+    const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+    // Add the first page and ellipsis if necessary
     if (startPage > 1) {
       pages.push(1);
       if (startPage > 2) pages.push('...');
     }
-
+  
+    // Add pages in the visible range
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-
+  
+    // Add the last page and ellipsis if necessary
     if (endPage < totalPages) {
       if (endPage < totalPages - 1) pages.push('...');
       pages.push(totalPages);
     }
-
+  
     return pages;
   };
+  
 
-  return (
+return (
     <div className="table-responsive">
       <CTable>
-        <CTableHead>
-          <CTableRow>
-            <CTableHeaderCell>#</CTableHeaderCell>
-            <CTableHeaderCell>Photo</CTableHeaderCell>
-            <CTableHeaderCell>Tenant Name</CTableHeaderCell>
-            <CTableHeaderCell>Email</CTableHeaderCell>
-            <CTableHeaderCell>Lease Start</CTableHeaderCell>
-            <CTableHeaderCell>Lease End</CTableHeaderCell>
-            <CTableHeaderCell>Actions</CTableHeaderCell>
-          </CTableRow>
-        </CTableHead>
         <CTableBody>
           {tenants.map((tenant, index) => {
             const tenantId = tenant?._id;
             if (!tenantId) return null;
+            
+            // Calculate using itemsPerPage prop
+            const itemNumber = (currentPage - 1) * itemsPerPage + index + 1;
 
             return (
-              <React.Fragment key={tenantId}>
-                <CTableRow>
-                  <CTableDataCell>{(currentPage - 1) * 5 + index + 1}</CTableDataCell>
+    <React.Fragment key={tenantId}>
+      <CTableRow>
+        <CTableDataCell>{itemNumber}</CTableDataCell>
+                  {/* <CTableDataCell>{(currentPage - 1) * 5 + index + 1}</CTableDataCell> */}
                   <CTableDataCell>
-                    <img
-                      src={tenantPhotos[tenantId] || placeholder}
-                      alt={tenant.tenantName || 'Tenant'}
-                      style={{
-                        width: '50px',
-                        height: '50px',
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        border: '2px solid #ddd',
-                      }}
-                      className="me-2"
-                      onError={(e) => {
-                        e.target.src = placeholder;
-                      }}
-                    />
+                  <img
+  src={tenantPhotos[tenantId] || placeholder}
+  alt={tenant.tenantName || 'Tenant'}
+  style={{
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '2px solid #ddd',
+  }}
+  className="me-2"
+  onError={(e) => {
+    e.target.src = placeholder; // Fallback to placeholder if the photo is missing
+  }}
+/>
+
                     <CButton 
                       color="light" 
                       size="sm" 
@@ -243,49 +232,45 @@ const TenantTable = ({
       </CTable>
 
       <CPagination className="mt-3" aria-label="Page navigation">
-        <CPaginationItem 
-          onClick={() => handlePageChange(1)}
-          disabled={currentPage === 1}
-        >
-          &laquo;
-        </CPaginationItem>
-        
-        <CPaginationItem
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          &lsaquo;
-        </CPaginationItem>
+  <CPaginationItem
+    onClick={() => handlePageChange(1)}
+    disabled={currentPage === 1}
+  >
+    &laquo;
+  </CPaginationItem>
 
-        {getPageNumbers().map((page, index) => (
-          <React.Fragment key={index}>
-            {page === '...' ? (
-              <CPaginationItem disabled>...</CPaginationItem>
-            ) : (
-              <CPaginationItem
-                active={page === currentPage}
-                onClick={() => handlePageChange(page)}
-              >
-                {page}
-              </CPaginationItem>
-            )}
-          </React.Fragment>
-        ))}
+  <CPaginationItem
+    onClick={() => handlePageChange(currentPage - 1)}
+    disabled={currentPage === 1}
+  >
+    &lsaquo;
+  </CPaginationItem>
 
-        <CPaginationItem
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          &rsaquo;
-        </CPaginationItem>
-        
-        <CPaginationItem
-          onClick={() => handlePageChange(totalPages)}
-          disabled={currentPage === totalPages}
-        >
-          &raquo;
-        </CPaginationItem>
-      </CPagination>
+  {getPageNumbers().map((page, index) => (
+    <CPaginationItem
+      key={index}
+      active={page === currentPage}
+      onClick={() => typeof page === 'number' && handlePageChange(page)}
+      disabled={page === '...'}
+    >
+      {page}
+    </CPaginationItem>
+  ))}
+
+  <CPaginationItem
+    onClick={() => handlePageChange(currentPage + 1)}
+    disabled={currentPage === totalPages}
+  >
+    &rsaquo;
+  </CPaginationItem>
+
+  <CPaginationItem
+    onClick={() => handlePageChange(totalPages)}
+    disabled={currentPage === totalPages}
+  >
+    &raquo;
+  </CPaginationItem>
+</CPagination>
     </div>
   );
 };

@@ -15,14 +15,11 @@ import {
   CAlert,
   CSpinner,
 } from '@coreui/react';
-import { useDispatch } from 'react-redux';
-import { addMaintenance, updateMaintenance } from '../../api/actions/MaintenanceActions';
+import axios from 'axios';
 
 const AddMaintenance = ({ visible, setVisible, editingMaintenance = null }) => {
-  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-
   const [maintenanceData, setMaintenanceData] = useState({
     tenant: '',
     property: '',
@@ -74,19 +71,19 @@ const AddMaintenance = ({ visible, setVisible, editingMaintenance = null }) => {
   };
 
   const validateForm = () => {
-    const errors = {};
-    if (!maintenanceData.tenant) errors.tenant = 'Tenant name is required.';
-    if (!maintenanceData.property) errors.property = 'Property name is required.';
-    if (!maintenanceData.typeOfRequest) errors.typeOfRequest = 'Type of request is required.';
-    if (!maintenanceData.description) errors.description = 'Description is required.';
-    if (!maintenanceData.urgencyLevel) errors.urgencyLevel = 'Urgency level is required.';
-    return errors;
+    const requiredFields = ['tenant', 'property', 'typeOfRequest', 'description', 'urgencyLevel'];
+    for (let field of requiredFields) {
+      if (!maintenanceData[field]) {
+        return `${field.charAt(0).toUpperCase() + field.slice(1)} is required.`;
+      }
+    }
+    return null;
   };
 
   const handleSubmit = async () => {
-    const formErrors = validateForm();
-    if (Object.keys(formErrors).length > 0) {
-      setErrorMessage('Please fill in all required fields.');
+    const validationError = validateForm();
+    if (validationError) {
+      setErrorMessage(validationError);
       return;
     }
 
@@ -95,21 +92,31 @@ const AddMaintenance = ({ visible, setVisible, editingMaintenance = null }) => {
 
       const formData = new FormData();
       Object.entries(maintenanceData).forEach(([key, value]) => {
-        if (key === 'photosOrVideos') {
+        if (key === 'photosOrVideos' && value.length) {
           value.forEach((file) => formData.append('photosOrVideos', file));
         } else {
           formData.append(key, value);
         }
       });
 
-      if (editingMaintenance) {
-        await dispatch(updateMaintenance({ id: editingMaintenance._id, maintenanceData })).unwrap();
-      } else {
-        await dispatch(addMaintenance(formData)).unwrap();
-      }
+      const url = editingMaintenance
+        ? `http://localhost:4000/api/v1/maintenances/${editingMaintenance._id}`
+        : 'http://localhost:4000/api/v1/maintenances';
+
+      const method = editingMaintenance ? 'put' : 'post';
+
+      await axios({
+        method,
+        url,
+        data: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       handleClose();
     } catch (error) {
-      setErrorMessage(error.message || 'Operation failed');
+      setErrorMessage(error.response?.data?.message || error.message || 'Operation failed');
     } finally {
       setIsLoading(false);
     }
@@ -121,8 +128,14 @@ const AddMaintenance = ({ visible, setVisible, editingMaintenance = null }) => {
   };
 
   return (
-    <CModal visible={visible} onClose={handleClose} alignment="center" backdrop="static" size="lg">
-      <CModalHeader className="bg-primary text-white">
+    <CModal
+      visible={visible}
+      onClose={handleClose}
+      alignment="center"
+      backdrop="static"
+      size="lg"
+    >
+      <CModalHeader className="bg-dark text-white">
         <CModalTitle>{editingMaintenance ? 'Edit Maintenance' : 'Add Maintenance'}</CModalTitle>
       </CModalHeader>
       <CModalBody>
@@ -134,66 +147,22 @@ const AddMaintenance = ({ visible, setVisible, editingMaintenance = null }) => {
               </CAlert>
             )}
             <CRow className="g-4">
-              <CCol xs={12}>
-                <CFormLabel htmlFor="tenant">Tenant Name</CFormLabel>
-                <CFormInput
-                  id="tenant"
-                  name="tenant"
-                  type="text"
-                  placeholder="Enter tenant name"
-                  value={maintenanceData.tenant}
-                  onChange={handleChange}
-                  required
-                />
-              </CCol>
-              <CCol xs={12}>
-                <CFormLabel htmlFor="property">Property Name</CFormLabel>
-                <CFormInput
-                  id="property"
-                  name="property"
-                  type="text"
-                  placeholder="Enter property name"
-                  value={maintenanceData.property}
-                  onChange={handleChange}
-                  required
-                />
-              </CCol>
-              <CCol xs={12}>
-                <CFormLabel htmlFor="typeOfRequest">Type of Request</CFormLabel>
-                <CFormInput
-                  id="typeOfRequest"
-                  name="typeOfRequest"
-                  type="text"
-                  placeholder="Enter type of request"
-                  value={maintenanceData.typeOfRequest}
-                  onChange={handleChange}
-                  required
-                />
-              </CCol>
-              <CCol xs={12}>
-                <CFormLabel htmlFor="description">Description</CFormLabel>
-                <CFormInput
-                  id="description"
-                  name="description"
-                  type="text"
-                  placeholder="Enter description"
-                  value={maintenanceData.description}
-                  onChange={handleChange}
-                  required
-                />
-              </CCol>
-              <CCol xs={12}>
-                <CFormLabel htmlFor="urgencyLevel">Urgency Level</CFormLabel>
-                <CFormInput
-                  id="urgencyLevel"
-                  name="urgencyLevel"
-                  type="text"
-                  placeholder="Enter urgency level"
-                  value={maintenanceData.urgencyLevel}
-                  onChange={handleChange}
-                  required
-                />
-              </CCol>
+              {['tenant', 'property', 'typeOfRequest', 'description', 'urgencyLevel'].map((field) => (
+                <CCol xs={12} key={field}>
+                  <CFormLabel htmlFor={field}>
+                    {field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
+                  </CFormLabel>
+                  <CFormInput
+                    id={field}
+                    name={field}
+                    type="text"
+                    placeholder={`Enter ${field}`}
+                    value={maintenanceData[field]}
+                    onChange={handleChange}
+                    required
+                  />
+                </CCol>
+              ))}
               <CCol xs={12}>
                 <CFormLabel htmlFor="preferredAccessTimes">Preferred Access Times</CFormLabel>
                 <CFormInput
@@ -233,7 +202,7 @@ const AddMaintenance = ({ visible, setVisible, editingMaintenance = null }) => {
         <CButton color="secondary" variant="ghost" onClick={handleClose} disabled={isLoading}>
           Cancel
         </CButton>
-        <CButton color="primary" onClick={handleSubmit} disabled={isLoading}>
+        <CButton color="dark" onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? (
             <>
               <CSpinner size="sm" className="me-2" />

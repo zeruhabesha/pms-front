@@ -59,7 +59,7 @@ const SuperAdminPhotoModal = ({ visible, setVisible, editingSuperAdmin, handleSa
       className="shadow-lg"
     >
       <CModalHeader className="bg-light border-bottom border-2">
-        <CModalTitle className="h4 fw-bold text-primary">Update Photo</CModalTitle>
+        <CModalTitle className="h4 fw-bold text-dark">Update Photo</CModalTitle>
       </CModalHeader>
       
       <CModalBody className="p-4">
@@ -100,7 +100,7 @@ const SuperAdminPhotoModal = ({ visible, setVisible, editingSuperAdmin, handleSa
           Cancel
         </CButton>
         <CButton 
-          color="primary"
+          color="dark"
           onClick={handlePhotoSave}
           className="px-4"
           disabled={!selectedPhoto}

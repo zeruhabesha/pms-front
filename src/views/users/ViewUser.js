@@ -90,7 +90,7 @@ const ViewUser = () => {
   const handleSavePhoto = async (photoFile) => {
     if (userToEdit) {
       await dispatch(uploadUserPhoto({ id: userToEdit._id, photo: photoFile }));
-      dispatch(fetchUsers({ page: localCurrentPage, limit: itemsPerPage, search: searchTerm }));
+      await dispatch(fetchUsers({ page: localCurrentPage, limit: itemsPerPage, search: searchTerm }));
       setEditPhotoVisible(false);
       toast.success('Photo updated successfully');
     }
@@ -128,6 +128,28 @@ const ViewUser = () => {
     setLocalCurrentPage(page);
   };
 
+  const handleSavePermissions = async (updatedUser) => {
+    try {
+      // Dispatching action to update user with updated permissions
+      await dispatch(updateUser(updatedUser)).unwrap();
+  
+      // Fetch users again after updating the permissions
+      dispatch(fetchUsers({
+        page: localCurrentPage,
+        limit: itemsPerPage,
+        search: searchTerm
+      }));
+  
+      // Close the permissions modal and show a success message
+      setPermissionsModalVisible(false);
+      toast.success('Permissions updated successfully');
+    } catch (error) {
+      toast.error('Failed to update permissions');
+      console.error('Failed to update permissions:', error);
+    }
+  };
+  
+  
   return (
     <CRow>
       <CCol xs={12}>
@@ -159,18 +181,20 @@ const ViewUser = () => {
               </CAlert>
             )}
            <UserTable
-      users={users || []}
-      currentPage={localCurrentPage}
-      totalPages={totalPages}
-      searchTerm={searchTerm}
-      setSearchTerm={handleSearch}
-      handleEdit={handleEdit}
-      handleDelete={handleDelete}
-      handleEditPhoto={handleEditPhoto}
-      handlePageChange={handlePageChange}
-      loading={loading}
-      itemsPerPage={itemsPerPage}
-    />
+  users={users || []}
+  currentPage={localCurrentPage}
+  totalPages={totalPages}
+  searchTerm={searchTerm}
+  setSearchTerm={handleSearch}
+  handleEdit={handleEdit}
+  handleDelete={handleDelete}
+  handleEditPhoto={handleEditPhoto}
+  handlePageChange={handlePageChange}
+  loading={loading}
+  itemsPerPage={itemsPerPage}
+  handleSavePermissions={handleSavePermissions}  // Pass this function
+/>
+
           </CCardBody>
         </CCard>
       </CCol>
@@ -194,7 +218,7 @@ const ViewUser = () => {
       <EditPhotoModal
         visible={editPhotoVisible}
         setVisible={setEditPhotoVisible}
-        user={userToEdit}
+        admin={userToEdit}
         onSavePhoto={handleSavePhoto}
       />
       <ToastContainer position="top-right" autoClose={3000} hideProgressBar />

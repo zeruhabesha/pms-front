@@ -215,7 +215,7 @@ const AddUser = ({ visible, setVisible, editingUser }) => {
                 <CButton color="secondary" variant="ghost" onClick={handleClose}>
                   Cancel
                 </CButton>
-                <CButton color="primary" type="submit">
+                <CButton color="dark" type="submit">
                   {editingUser ? 'Update User' : 'Add User'}
                 </CButton>
               </CModalFooter>

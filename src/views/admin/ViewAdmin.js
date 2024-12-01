@@ -6,7 +6,7 @@ import {
   deleteAdmin,
   addAdmin,
   updateAdmin,
-  uploadAdminPhoto,
+  uploadAdminPhoto, 
 } from '../../api/actions/AdminActions';
 import AdminTable from './AdminTable';
 import AdminModal from './AdminModal';
@@ -69,6 +69,11 @@ const ViewAdmin = () => {
   };
 
   const confirmDelete = async () => {
+    if (!adminToDelete?._id) {
+      toast.error('No admin selected for deletion');
+      return;
+    }
+  
     try {
       await dispatch(deleteAdmin(adminToDelete._id)).unwrap();
       dispatch(fetchAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
@@ -78,6 +83,7 @@ const ViewAdmin = () => {
       toast.error('Failed to delete Admin');
     }
   };
+  
 
   const handleEditPhoto = (admin) => {
     setAdminToEdit(admin);
@@ -94,31 +100,29 @@ const ViewAdmin = () => {
   };
 
   const handleSave = async (updatedData) => {
+    if (!editingAdmin?._id) {
+      toast.error('No admin selected for editing');
+      return;
+    }
+  
     try {
       const formattedData = {
         ...updatedData,
         status: updatedData.status ? 'active' : 'inactive',
+        activeStart: updatedData.activeStart || null,
+        activeEnd: updatedData.activeEnd || null,
       };
   
-      if (editingAdmin && editingAdmin._id) {
-        await dispatch(updateAdmin({ id: editingAdmin._id, adminData: formattedData })).unwrap();
-        dispatch(fetchAdmins({
-          page: currentPage,
-          limit: itemsPerPage,
-          search: searchTerm,
-        }));
-        setAdminModalVisible(false);
-        toast.success('Admin updated successfully');
-      } else {
-        throw new Error("Editing admin data is missing or invalid.");
-      }
+      await dispatch(updateAdmin({ id: editingAdmin._id, adminData: formattedData })).unwrap();
+      dispatch(fetchAdmins({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+      setAdminModalVisible(false);
+      toast.success('Admin updated successfully');
     } catch (error) {
-      console.error('Update error:', error);
       toast.error(error.message || 'Failed to update Admin');
     }
   };
   
-  
+
 
   const handleAddAdmin = async (AdminData) => {
     try {
@@ -184,12 +188,13 @@ const ViewAdmin = () => {
       {/* Modals */}
       {AdminModalVisible && (
         <AdminModal
-          visible={AdminModalVisible}
-          setVisible={setAdminModalVisible}
-          editingAdmin={editingAdmin}
-          handleSave={handleSave}
-          handleAddAdmin={handleAddAdmin}
-        />
+  visible={AdminModalVisible}
+  setVisible={setAdminModalVisible}
+  editingAdmin={editingAdmin} // Pass the correct object here
+  handleSave={handleSave}
+  handleAddAdmin={handleAddAdmin}
+/>
+
       )}
       <AdminDeleteModal
         visible={deleteModalVisible}

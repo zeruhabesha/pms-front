@@ -8,6 +8,7 @@ import sidebarReducer from '../components/store/sidebarSlice';
 import tenantReducer from './slice/TenantSlice';
 import agreementReducer from './slice/AgreementSlice';
 import maintenanceReducer from './slice/MaintenanceSlice'; // Import MaintenanceSlice reducer
+import reportReducer from './slice/ReportSlices'; // Import MaintenanceSlice reducer
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,8 @@ export const store = configureStore({
     tenant: tenantReducer,
     agreement: agreementReducer,
     maintenance: maintenanceReducer, // Add maintenance reducer
+    report: reportReducer, // Add report reducer
+
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

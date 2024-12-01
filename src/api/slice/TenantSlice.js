@@ -1,54 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import TenantService from '../services/tenant.service';
-
-// Async Thunks
-export const fetchTenants = createAsyncThunk(
-  'tenant/fetchTenants',
-  async ({ page = 1, limit = 10, search = '' }, { rejectWithValue }) => {
-    try {
-      const response = await TenantService.fetchTenants(page, limit, search);
-      return response;
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to fetch tenants');
-    }
-  }
-);
-
-export const addTenant = createAsyncThunk(
-  'tenant/addTenant',
-  async (tenantData, { rejectWithValue }) => {
-    try {
-      const response = await TenantService.addTenant(tenantData);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to add tenant');
-    }
-  }
-);
-
-export const updateTenant = createAsyncThunk(
-  'tenant/updateTenant',
-  async ({ id, tenantData }, { rejectWithValue }) => {
-    try {
-      const response = await TenantService.updateTenant(id, tenantData);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to update tenant');
-    }
-  }
-);
-
-export const deleteTenant = createAsyncThunk(
-  'tenant/deleteTenant',
-  async (id, { rejectWithValue }) => {
-    try {
-      await TenantService.deleteTenant(id);
-      return id;
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to delete tenant');
-    }
-  }
-);
+import { fetchTenants, addTenant, updateTenant, deleteTenant  } from '../actions/TenantActions';
+import { uploadUserPhoto  } from '../actions/userActions';
 
 // Initial state
 const initialState = {
@@ -107,16 +59,15 @@ const tenantSlice = createSlice({
       })
       .addCase(addTenant.fulfilled, (state, action) => {
         state.loading = false;
-        state.tenants.push(action.payload);
-        state.totalTenants += 1;
+        state.tenants = [action.payload, ...state.tenants]; // Add new tenant
+        state.totalTenants += 1; // Update total tenants count
         state.lastUpdated = new Date().toISOString();
         state.error = null;
       })
       .addCase(addTenant.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Failed to add tenant";
       })
-
       // Update Tenant
       .addCase(updateTenant.pending, (state) => {
         state.loading = true;
@@ -131,18 +82,20 @@ const tenantSlice = createSlice({
           state.tenants[index] = {
             ...state.tenants[index],
             ...action.payload,
-            updatedAt: new Date().toISOString()
           };
         }
         state.lastUpdated = new Date().toISOString();
         state.error = null;
         if (state.selectedTenant?.id === action.payload.id) {
-          state.selectedTenant = action.payload;
+          state.selectedTenant = {
+            ...state.selectedTenant,
+            ...action.payload,
+          };
         }
       })
       .addCase(updateTenant.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload || "Failed to update tenant";
       })
 
       // Delete Tenant
@@ -164,6 +117,20 @@ const tenantSlice = createSlice({
       })
       .addCase(deleteTenant.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      
+      .addCase(uploadUserPhoto.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(uploadUserPhoto.fulfilled, (state, action) => {
+        const { id, photoUrl } = action.payload;
+        const user = state.users.find((user) => user._id === id);
+        if (user) {
+          user.photoUrl = photoUrl;
+        }
+      })
+      .addCase(uploadUserPhoto.rejected, (state, action) => {
         state.error = action.payload;
       });
   }
