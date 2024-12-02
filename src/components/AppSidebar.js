@@ -13,6 +13,7 @@ import { AppSidebarNav } from './AppSidebarNav';
 import { sygnet } from 'src/assets/brand/sygnet';
 import navigation from '../_nav';
 import { setSidebarShow, setSidebarUnfoldable } from './store/sidebarSlice'; // Adjusted to the correct path
+import logo from '../assets/images/logo.png';
 
 const AppSidebar = () => {
   const dispatch = useDispatch();
@@ -38,16 +39,15 @@ const AppSidebar = () => {
       }}
     >
       <CSidebarHeader className="border-bottom">
-        <CSidebarBrand to="/">
-        <span
-          className="sidebar-brand-full "
-          style={{ fontSize: '1.9rem', textDecoration: 'none' }}
-        >
-          <strong>BETA</strong>-PMS
-        </span>
+      <CSidebarBrand to="/">
+        <img 
+          src={logo}
+          alt="BETA-PMS Logo" 
+          style={{ height: '90px', width: 'auto' }} 
+        />
+        <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} />
+      </CSidebarBrand>
 
-          <CIcon customClassName="sidebar-brand-narrow" icon={sygnet} height={32} />
-        </CSidebarBrand>
         <CCloseButton 
           className="d-lg-none" 
           dark 

@@ -12,18 +12,21 @@ import {
   CFormInput,
   CCollapse,
 } from '@coreui/react';
-import { CIcon } from '@coreui/icons-react'; 
-import { cilPencil, cilTrash, cilCheckCircle, cilXCircle, cilPlus, cilMinus, cilShieldAlt } from '@coreui/icons';
+import { CIcon } from '@coreui/icons-react';
+import { cilPencil, cilTrash, cilCheckCircle, cilXCircle, cilPlus, cilMinus, cilShieldAlt, cilArrowTop, cilArrowBottom, cilFile, cilClipboard, cilCloudDownload } from '@coreui/icons';
 import placeholder from '../image/placeholder.png';
-import PermissionsModal from './PermissionsModal'; 
+import PermissionsModal from './PermissionsModal';
 import { ToastContainer, toast } from 'react-toastify';
+import { CSVLink } from 'react-csv';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 import 'react-toastify/dist/ReactToastify.css';
-import { useDispatch } from 'react-redux';
 
 const UserTable = ({
   users,
   currentPage,
-  totalPages, // Add this prop
+  totalPages,
   searchTerm,
   setSearchTerm,
   handleEdit,
@@ -32,47 +35,87 @@ const UserTable = ({
   handlePageChange,
   itemsPerPage = 5,
 }) => {
-
   const [expandedRows, setExpandedRows] = useState({});
   const [permissionsModalVisible, setPermissionsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const dispatch = useDispatch();
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
 
   const toggleRow = (userId) => {
-    setExpandedRows(prev => ({
+    setExpandedRows((prev) => ({
       ...prev,
-      [userId]: !prev[userId]
+      [userId]: !prev[userId],
     }));
   };
-  // Calculate total pages based on search term and filtered users
-  const calculateTotalPages = () => {
-    const filteredUsers = searchTerm
-      ? users.filter(user => 
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.role.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : users; // If no search term, use all users.
 
-    return Math.ceil(filteredUsers.length / itemsPerPage); // Calculate total pages based on filtered list
+  const handleSort = (key) => {
+    setSortConfig((prevConfig) => {
+      const direction =
+        prevConfig.key === key && prevConfig.direction === 'ascending' ? 'descending' : 'ascending';
+      return { key, direction };
+    });
   };
 
+  const sortedUsers = React.useMemo(() => {
+    if (!sortConfig.key) return users;
 
-  const validTotalPages = Math.max(1, totalPages);
-  const currentItems = users; // The parent component now sends the correct page of items
+    return [...users].sort((a, b) => {
+      const aKey = a[sortConfig.key] || '';
+      const bKey = b[sortConfig.key] || '';
 
-  // Get the current page's users (paginated)
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  // const currentItems = users.slice(indexOfFirstItem, indexOfLastItem);
+      if (aKey < bKey) {
+        return sortConfig.direction === 'ascending' ? -1 : 1;
+      }
+      if (aKey > bKey) {
+        return sortConfig.direction === 'ascending' ? 1 : -1;
+      }
+      return 0;
+    });
+  }, [users, sortConfig]);
 
-  // Render pagination items
+  const csvData = users.map((user, index) => ({
+    index: (currentPage - 1) * itemsPerPage + index + 1,
+    name: user?.name || 'N/A',
+    email: user?.email || 'N/A',
+    role: user?.role || 'N/A',
+    status: user?.status || 'N/A',
+  }));
+
+  const clipboardData = users
+    .map(
+      (user, index) =>
+        `${(currentPage - 1) * itemsPerPage + index + 1}. ${user?.name || 'N/A'} - ${user?.email || 'N/A'} - ${
+          user?.role || 'N/A'
+        } - ${user?.status || 'N/A'}`
+    )
+    .join('\n');
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text('User Data', 14, 10);
+
+    const tableData = users.map((user, index) => [
+      (currentPage - 1) * itemsPerPage + index + 1,
+      user?.name || 'N/A',
+      user?.email || 'N/A',
+      user?.role || 'N/A',
+      user?.status || 'N/A',
+    ]);
+
+    doc.autoTable({
+      head: [['#', 'Name', 'Email', 'Role', 'Status']],
+      body: tableData,
+      startY: 20,
+    });
+
+    doc.save('user_data.pdf');
+  };
+
   const renderPaginationItems = () => {
     const items = [];
     const maxVisiblePages = 5;
-
-    if (validTotalPages <= maxVisiblePages) {
-      for (let i = 1; i <= validTotalPages; i++) {
+  
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
         items.push(
           <CPaginationItem
             key={i}
@@ -85,14 +128,14 @@ const UserTable = ({
       }
       return items;
     }
-
+  
     let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(validTotalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage === validTotalPages) {
-      startPage = Math.max(1, validTotalPages - maxVisiblePages + 1);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+    if (endPage === totalPages) {
+      startPage = Math.max(1, totalPages - maxVisiblePages + 1);
     }
-
+  
     if (startPage > 1) {
       items.push(
         <CPaginationItem
@@ -111,7 +154,7 @@ const UserTable = ({
         );
       }
     }
-
+  
     for (let i = startPage; i <= endPage; i++) {
       items.push(
         <CPaginationItem
@@ -123,9 +166,9 @@ const UserTable = ({
         </CPaginationItem>
       );
     }
-
-    if (endPage < validTotalPages) {
-      if (endPage < validTotalPages - 1) {
+  
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
         items.push(
           <CPaginationItem key="end-ellipsis" disabled>
             ...
@@ -134,88 +177,122 @@ const UserTable = ({
       }
       items.push(
         <CPaginationItem
-          key={validTotalPages}
-          active={validTotalPages === currentPage}
-          onClick={() => handlePageChange(validTotalPages)}
+          key={totalPages}
+          active={totalPages === currentPage}
+          onClick={() => handlePageChange(totalPages)}
         >
-          {validTotalPages}
+          {totalPages}
         </CPaginationItem>
       );
     }
-
+  
     return items;
   };
 
-  const handlePermissionsClick = (user) => {
-    setSelectedUser(user);
-    setPermissionsModalVisible(true);
-  };
-
   const handlePermissionsClose = () => {
-    setPermissionsModalVisible(false);
-    setSelectedUser(null);
+    setPermissionsModalVisible(false); // Close the modal
+    setSelectedUser(null);            // Clear the selected user
   };
-
+  
   const handlePermissionsSave = async (updatedUser) => {
     try {
-      await dispatch(updateUserPermissions({ userId: updatedUser._id, permissions: updatedUser.permissionStatus })).unwrap();
+      // Dispatch an action or call your API to update user permissions
+      await dispatch(
+        updateUserPermissions({
+          userId: updatedUser._id,
+          permissions: updatedUser.permissions, // Adjust based on your data structure
+        })
+      ).unwrap();
+  
+      // Show success notification
       toast.success('Permissions updated successfully!');
+  
+      // Close the modal and refresh the user list
       setPermissionsModalVisible(false);
+      setSelectedUser(null);
       dispatch(fetchUsers({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
     } catch (error) {
+      // Handle error and show a notification
       toast.error('Failed to update permissions');
     }
   };
   
+  const handlePermissionsClick = (user) => {
+    setSelectedUser(user); // Set the user whose permissions are being edited
+    setPermissionsModalVisible(true); // Open the modal
+  };
   
-  const renderExpandedContent = (user) => (
-    <CTableRow>
-      <CTableDataCell colSpan="7">
-        <CCollapse visible={expandedRows[user._id]}>
-          <div className="p-3 bg-light">
-            <h6>Additional User Details</h6>
-            <div className="row">
-              <div className="col-md-6">
-                <p><strong>User ID:</strong> {user._id}</p>
-                <p><strong>Created At:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
-                <p><strong>Last Updated:</strong> {new Date(user.updatedAt).toLocaleDateString()}</p>
-              </div>
-              <div className="col-md-6">
-                <p><strong>Phone:</strong> {user.phone || 'N/A'}</p>
-                <p><strong>Address:</strong> {user.address || 'N/A'}</p>
-                <p><strong>Department:</strong> {user.department || 'N/A'}</p>
-              </div>
-            </div>
-          </div>
-        </CCollapse>
-      </CTableDataCell>
-    </CTableRow>
-  );
-
   return (
     <div>
-       <CFormInput
-        type="text"
-        placeholder="Search by name, email, or role"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="mb-3"
-      />
+      <div className="d-flex mb-3 gap-2">
+        <div className="d-flex gap-2">
+          <CSVLink
+            data={csvData}
+            headers={[
+              { label: '#', key: 'index' },
+              { label: 'Name', key: 'name' },
+              { label: 'Email', key: 'email' },
+              { label: 'Role', key: 'role' },
+              { label: 'Status', key: 'status' },
+            ]}
+            filename="user_data.csv"
+            className="btn btn-dark"
+          >
+            <CIcon icon={cilFile} title="Export CSV" />
+          </CSVLink>
+          <CopyToClipboard text={clipboardData}>
+            <CButton color="dark" title="Copy to Clipboard">
+              <CIcon icon={cilClipboard} />
+            </CButton>
+          </CopyToClipboard>
+          <CButton color="dark" onClick={exportToPDF} title="Export PDF">
+            <CIcon icon={cilCloudDownload} />
+          </CButton>
+        </div>
+        <CFormInput
+          type="text"
+          placeholder="Search by name, email, or role"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-100%"
+        />
+      </div>
+
       <div className="table-responsive">
-        <CTable >
+        <CTable>
           <CTableHead>
             <CTableRow>
-              <CTableHeaderCell>#</CTableHeaderCell>
+              <CTableHeaderCell onClick={() => handleSort('index')} style={{ cursor: 'pointer' }}>
+                #
+                {sortConfig.key === 'index' && (
+                  <CIcon icon={sortConfig.direction === 'ascending' ? cilArrowTop : cilArrowBottom} />
+                )}
+              </CTableHeaderCell>
               <CTableHeaderCell>Photo</CTableHeaderCell>
-              <CTableHeaderCell>Name</CTableHeaderCell>
-              <CTableHeaderCell>Email</CTableHeaderCell>
-              <CTableHeaderCell>Role</CTableHeaderCell>
+              <CTableHeaderCell onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
+                Name
+                {sortConfig.key === 'name' && (
+                  <CIcon icon={sortConfig.direction === 'ascending' ? cilArrowTop : cilArrowBottom} />
+                )}
+              </CTableHeaderCell>
+              <CTableHeaderCell onClick={() => handleSort('email')} style={{ cursor: 'pointer' }}>
+                Email
+                {sortConfig.key === 'email' && (
+                  <CIcon icon={sortConfig.direction === 'ascending' ? cilArrowTop : cilArrowBottom} />
+                )}
+              </CTableHeaderCell>
+              <CTableHeaderCell onClick={() => handleSort('role')} style={{ cursor: 'pointer' }}>
+                Role
+                {sortConfig.key === 'role' && (
+                  <CIcon icon={sortConfig.direction === 'ascending' ? cilArrowTop : cilArrowBottom} />
+                )}
+              </CTableHeaderCell>
               <CTableHeaderCell>Status</CTableHeaderCell>
               <CTableHeaderCell>Actions</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            {users.map((user, index) => user && (
+            {sortedUsers.map((user, index) => (
               <React.Fragment key={user._id || `row-${index}`}>
                 <CTableRow>
                   <CTableDataCell>{(currentPage - 1) * itemsPerPage + index + 1}</CTableDataCell>
@@ -241,87 +318,101 @@ const UserTable = ({
                     )}
                   </CTableDataCell>
                   <CTableDataCell>
-                    <CButton color="light" size="sm" className="me-2" onClick={() => handlePermissionsClick(user)} title="Permissions">
-                      <CIcon icon={cilShieldAlt} />
-                    </CButton>
+                  <CButton
+                    color="light"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => handlePermissionsClick(user)}
+                    title="Permissions"
+                  >
+                    <CIcon icon={cilShieldAlt} />
+                  </CButton>
+
                     <CButton color="light" size="sm" className="me-2" onClick={() => handleEdit(user)} title="Edit">
                       <CIcon icon={cilPencil} />
                     </CButton>
                     <CButton color="danger" size="sm" className="me-2" onClick={() => handleDelete(user)} title="Delete">
                       <CIcon icon={cilTrash} />
                     </CButton>
-                    <CButton 
-                      color="light" 
-                      size="sm" 
-                      onClick={() => toggleRow(user._id)} 
+                    <CButton
+                      color="light"
+                      size="sm"
+                      onClick={() => toggleRow(user._id)}
                       title={expandedRows[user._id] ? 'Collapse' : 'Expand'}
                     >
                       <CIcon icon={expandedRows[user._id] ? cilMinus : cilPlus} />
                     </CButton>
                   </CTableDataCell>
                 </CTableRow>
-                {renderExpandedContent(user)}
+                <CTableRow>
+                  <CTableDataCell colSpan="7">
+                    <CCollapse visible={expandedRows[user._id]}>
+                      <div className="p-3 bg-light">
+                        <h6>Additional User Details</h6>
+                        <div className="row">
+                          <div className="col-md-6">
+                            <p><strong>User ID:</strong> {user._id}</p>
+                            <p><strong>Created At:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+                            <p><strong>Last Updated:</strong> {new Date(user.updatedAt).toLocaleDateString()}</p>
+                          </div>
+                          <div className="col-md-6">
+                            <p><strong>Phone:</strong> {user.phone || 'N/A'}</p>
+                            <p><strong>Address:</strong> {user.address || 'N/A'}</p>
+                            <p><strong>Department:</strong> {user.department || 'N/A'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CCollapse>
+                  </CTableDataCell>
+                </CTableRow>
               </React.Fragment>
             ))}
           </CTableBody>
         </CTable>
       </div>
 
-      {/* Pagination */}
-      <CPagination className="mt-3" aria-label="Page navigation">
-        <CPaginationItem
-          aria-label="Previous"
-          disabled={currentPage === 1}
-          onClick={() => handlePageChange(1)}
-        >
-          <span aria-hidden="true">&laquo;</span>
-        </CPaginationItem>
-        <CPaginationItem
-          disabled={currentPage === 1}
-          onClick={() => handlePageChange(currentPage - 1)}
-        >
-          <span aria-hidden="true">&lsaquo;</span>
-        </CPaginationItem>
+      <div className="d-flex justify-content-between align-items-center mt-3">
+        <span>Total Users: {users.length}</span>
+        <CPagination className="d-inline-flex">
+  <CPaginationItem
+    aria-label="Previous"
+    disabled={currentPage === 1}
+    onClick={() => handlePageChange(1)}
+  >
+    &laquo;
+  </CPaginationItem>
+  <CPaginationItem
+    disabled={currentPage === 1}
+    onClick={() => handlePageChange(currentPage - 1)}
+  >
+    &lsaquo;
+  </CPaginationItem>
+  {renderPaginationItems()}
+  <CPaginationItem
+    disabled={currentPage === totalPages}
+    onClick={() => handlePageChange(currentPage + 1)}
+  >
+    &rsaquo;
+  </CPaginationItem>
+  <CPaginationItem
+    aria-label="Next"
+    disabled={currentPage === totalPages}
+    onClick={() => handlePageChange(totalPages)}
+  >
+    &raquo;
+  </CPaginationItem>
+</CPagination>
 
-        {renderPaginationItems()}
+      </div>
 
-        <CPaginationItem
-          disabled={currentPage === validTotalPages}
-          onClick={() => handlePageChange(currentPage + 1)}
-        >
-          <span aria-hidden="true">&rsaquo;</span>
-        </CPaginationItem>
-        <CPaginationItem
-          aria-label="Next"
-          disabled={currentPage === validTotalPages}
-          onClick={() => handlePageChange(validTotalPages)}
-        >
-          <span aria-hidden="true">&raquo;</span>
-        </CPaginationItem>
-      </CPagination>
-
-      {/* Permissions Modal */}
-      {selectedUser && (
-        // <PermissionsModal
-        //   visible={permissionsModalVisible}
-        //   user={selectedUser}
-        //   onClose={handlePermissionsClose}
-        //   onSavePermissions={(user) => {
-        //     console.log('Permissions saved for user:', user);
-        //     handlePermissionsClose();
-        //   }}
-        // />
-        <PermissionsModal
+      <PermissionsModal
   visible={permissionsModalVisible}
   user={selectedUser}
   onClose={handlePermissionsClose}
-  handleSavePermissions={handlePermissionsSave} // Pass the correct function
+  handleSavePermissions={handlePermissionsSave}
 />
 
-      )}
-
-<ToastContainer position="top-right" autoClose={3000} hideProgressBar />
-
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
     </div>
   );
 };
