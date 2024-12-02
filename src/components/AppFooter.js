@@ -9,7 +9,7 @@ const AppFooter = () => {
       </div>
       <div className="ms-auto">
         <span className="me-1">Powered by</span>
-        <a href="https://betatechhub.net" target="_blank" rel="Beta Tech Hub">
+        <a href="https://betatechhub.com" target="_blank" rel="Beta Tech Hub">
           Beta-Tech-Hub 
         </a>
       </div>

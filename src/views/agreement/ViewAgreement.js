@@ -70,13 +70,18 @@ const ViewAgreement = () => {
   const handleSave = async (formData) => {
     try {
       if (selectedAgreement) {
-        await axios.put(
-          `http://localhost:4000/api/v1/lease/${selectedAgreement._id}`,
-          formData
-        );
+        await axios.put(`http://localhost:4000/api/v1/lease/${selectedAgreement._id}`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         toast.success("Agreement updated successfully.");
       } else {
-        await axios.post("http://localhost:4000/api/v1/lease", formData);
+        await axios.post("http://localhost:4000/api/v1/lease", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
         toast.success("Agreement added successfully.");
       }
       setAgreementModalVisible(false);

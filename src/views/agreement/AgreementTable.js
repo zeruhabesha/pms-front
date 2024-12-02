@@ -40,6 +40,11 @@ const AgreementTable = ({
     return date.toLocaleDateString();
   };
 
+  const downloadFile = (fileName) => {
+    const downloadUrl = `http://localhost:4000/api/v1/lease/download/${fileName}`;
+    window.open(downloadUrl, "_blank");
+  };
+
   return (
     <div className="table-responsive">
       <CTable hover bordered>
@@ -143,18 +148,18 @@ const AgreementTable = ({
                         <div>
                           <strong>Documents:</strong>{" "}
                           {agreement.documents?.length > 0 ? (
-                            agreement.documents.map((doc, idx) => (
-                              <span key={idx}>
-                                <a
-                                  href={doc}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Document {idx + 1}
-                                </a>
-                                {idx < agreement.documents.length - 1 && ", "}
-                              </span>
-                            ))
+                            <ul className="list-unstyled">
+                              {agreement.documents.map((doc, idx) => (
+                                <li key={idx}>
+                                  <button
+                                    className="btn btn-link"
+                                    onClick={() => downloadFile(doc)}
+                                  >
+                                    {doc}
+                                  </button>
+                                </li>
+                              ))}
+                            </ul>
                           ) : (
                             "N/A"
                           )}

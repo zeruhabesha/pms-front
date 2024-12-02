@@ -21,7 +21,7 @@ const MaintenanceTableRow = ({ maintenance, index, onEdit, onDelete, onViewDetai
   // Dynamic style for status
   const statusStyles = {
     Pending: { backgroundColor: 'orange', color: 'white' },
-    'In Progress': { backgroundColor: 'blue', color: 'white' },
+    'In Progress': { backgroundColor: '#212121', color: 'white' },
     Completed: { backgroundColor: 'green', color: 'white' },
     default: { backgroundColor: 'gray', color: 'white' },
   };

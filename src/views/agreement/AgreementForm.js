@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   CForm,
   CFormInput,
@@ -14,27 +14,43 @@ import Select from "react-select";
 const AgreementForm = ({
   tenants = [],
   properties = [],
-  initialData,
+  initialData = {},
   onSubmit,
   isLoading,
   setErrorMessage,
 }) => {
   const [formData, setFormData] = useState({
-    tenant: initialData?.tenant || "",
-    property: initialData?.property || "",
-    leaseStart: initialData?.leaseStart || "",
-    leaseEnd: initialData?.leaseEnd || "",
-    rentAmount: initialData?.rentAmount || "",
-    securityDeposit: initialData?.securityDeposit || "",
-    paymentTerms: initialData?.paymentTerms || { dueDate: "", paymentMethod: "" },
-    rulesAndConditions: initialData?.rulesAndConditions || "",
-    additionalOccupants: initialData?.additionalOccupants || "",
-    utilitiesAndServices: initialData?.utilitiesAndServices || "",
-    documents: initialData?.documents || [],
+    tenant: "",
+    property: "",
+    leaseStart: "",
+    leaseEnd: "",
+    rentAmount: "",
+    securityDeposit: "",
+    paymentTerms: { dueDate: "", paymentMethod: "" },
+    rulesAndConditions: "",
+    additionalOccupants: "",
+    utilitiesAndServices: "",
+    documents: [],
   });
 
-  const [fileErrors, setFileErrors] = useState([]);
-  const allowedFileTypes = ["application/pdf", "image/jpeg", "image/png"];
+  // Effect to update formData when initialData changes (e.g., on edit)
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      setFormData({
+        tenant: initialData?.tenant?._id || "",
+        property: initialData?.property?._id || "",
+        leaseStart: initialData?.leaseStart || "",
+        leaseEnd: initialData?.leaseEnd || "",
+        rentAmount: initialData?.rentAmount || "",
+        securityDeposit: initialData?.securityDeposit || "",
+        paymentTerms: initialData?.paymentTerms || { dueDate: "", paymentMethod: "" },
+        rulesAndConditions: initialData?.rulesAndConditions || "",
+        additionalOccupants: initialData?.additionalOccupants || "",
+        utilitiesAndServices: initialData?.utilitiesAndServices || "",
+        documents: initialData?.documents || [],
+      });
+    }
+  }, [initialData]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -54,7 +70,7 @@ const AgreementForm = ({
     const errors = [];
 
     files.forEach((file) => {
-      if (allowedFileTypes.includes(file.type)) {
+      if (file.type.startsWith("application/") || file.type.startsWith("image/")) {
         newFiles.push(file);
       } else {
         errors.push(`${file.name} is not a valid file type.`);
@@ -88,7 +104,6 @@ const AgreementForm = ({
   return (
     <CForm onSubmit={handleSubmit}>
       <CRow className="g-4">
-        {/* Tenant Selection */}
         <CCol xs={12}>
           <label>Tenant</label>
           <Select
@@ -104,12 +119,11 @@ const AgreementForm = ({
             isClearable
           />
         </CCol>
-        {/* Property Selection */}
         <CCol xs={12}>
           <label>Property</label>
           <Select
             options={properties.map((p) => ({
-              label: p.propertyName || p.address,
+              label: p.title || p.address,
               value: p._id,
             }))}
             value={properties.find((p) => p._id === formData.property) || null}
@@ -120,7 +134,6 @@ const AgreementForm = ({
             isClearable
           />
         </CCol>
-        {/* Lease Dates */}
         <CCol xs={6}>
           <CFormInput
             type="date"
@@ -141,7 +154,6 @@ const AgreementForm = ({
             required
           />
         </CCol>
-        {/* Rent and Deposit */}
         <CCol xs={6}>
           <CFormInput
             type="number"
@@ -164,7 +176,6 @@ const AgreementForm = ({
             required
           />
         </CCol>
-        {/* Payment Terms */}
         <CCol xs={6}>
           <CFormInput
             type="text"
@@ -187,31 +198,13 @@ const AgreementForm = ({
             <option value="Credit Card">Credit Card</option>
           </CFormSelect>
         </CCol>
-        {/* Rules and Conditions */}
         <CCol xs={12}>
           <CFormInput
-            type="text"
-            label="Rules and Conditions"
-            name="rulesAndConditions"
-            placeholder="Enter rules and conditions"
-            value={formData.rulesAndConditions}
-            onChange={handleInputChange}
+            type="file"
+            label="Upload Documents"
+            multiple
+            onChange={handleFileChange}
           />
-        </CCol>
-        {/* Additional Occupants */}
-        <CCol xs={12}>
-          <CFormInput
-            type="text"
-            label="Additional Occupants"
-            name="additionalOccupants"
-            placeholder="Enter names separated by commas"
-            value={formData.additionalOccupants}
-            onChange={handleInputChange}
-          />
-        </CCol>
-        {/* File Upload */}
-        <CCol xs={12}>
-          <CFormInput type="file" label="Upload Documents" multiple onChange={handleFileChange} />
           {fileErrors.length > 0 && (
             <CAlert color="danger">
               {fileErrors.map((error, idx) => (
@@ -236,8 +229,7 @@ const AgreementForm = ({
           </ul>
         </CCol>
       </CRow>
-      {isLoading ? <CSpinner size="sm" className="mt-3" /> : null}
-      {formData.error && <CAlert color="danger">{formData.error}</CAlert>}
+      {isLoading && <CSpinner size="sm" className="mt-3" />}
       <CButton type="submit" color="primary" className="mt-3">
         Submit
       </CButton>

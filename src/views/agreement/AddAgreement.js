@@ -9,7 +9,8 @@ import {
   CAlert,
   CSpinner,
 } from "@coreui/react";
-import axios from "axios"; // Replace httpCommon with axios for clarity
+import axios from "axios";
+import { toast } from "react-toastify";
 import AgreementForm from "./AgreementForm";
 
 const AddAgreement = ({ visible, setVisible, editingAgreement, handleSave }) => {
@@ -24,18 +25,16 @@ const AddAgreement = ({ visible, setVisible, editingAgreement, handleSave }) => 
     }
   }, [visible]);
 
-  // Fetch tenants and properties
   const fetchData = async () => {
     setIsLoading(true);
-    setErrorMessage("");
     try {
       const [tenantsResponse, propertiesResponse] = await Promise.all([
         axios.get("http://localhost:4000/api/v1/tenants"),
         axios.get("http://localhost:4000/api/v1/properties"),
       ]);
 
-      setTenants(tenantsResponse.data?.tenants || []);
-      setProperties(propertiesResponse.data?.properties || []);
+      setTenants(tenantsResponse.data.tenants || []);
+      setProperties(propertiesResponse.data.properties || []);
     } catch (error) {
       console.error("Error fetching data:", error);
       setErrorMessage("Failed to load tenants or properties. Please try again.");
@@ -46,40 +45,23 @@ const AddAgreement = ({ visible, setVisible, editingAgreement, handleSave }) => 
 
   const handleFormSubmit = (formData) => {
     try {
-      handleSave(formData); // Call the save handler passed as a prop
-      setVisible(false); // Close modal
+      handleSave(formData);
+      setVisible(false);
     } catch (error) {
       console.error("Error saving agreement:", error);
       setErrorMessage("Failed to save the agreement. Please try again.");
     }
   };
 
-  const resetModal = () => {
-    setErrorMessage("");
-    setProperties([]);
-    setTenants([]);
-    setVisible(false);
-  };
+
 
   return (
-    <CModal
-      visible={visible}
-      onClose={resetModal}
-      alignment="center"
-      backdrop="static"
-      size="lg"
-    >
+    <CModal visible={visible} onClose={() => setVisible(false)} alignment="center" backdrop="static" size="lg">
       <CModalHeader className="bg-dark text-white">
-        <CModalTitle>
-          {editingAgreement ? "Edit Lease Agreement" : "Add Lease Agreement"}
-        </CModalTitle>
+        <CModalTitle>{editingAgreement ? "Edit Lease Agreement" : "Add Lease Agreement"}</CModalTitle>
       </CModalHeader>
       <CModalBody>
-        {errorMessage && (
-          <CAlert color="danger" className="mb-4">
-            {errorMessage}
-          </CAlert>
-        )}
+        {errorMessage && <CAlert color="danger">{errorMessage}</CAlert>}
         {isLoading ? (
           <div className="text-center p-4">
             <CSpinner color="dark" />
@@ -91,13 +73,12 @@ const AddAgreement = ({ visible, setVisible, editingAgreement, handleSave }) => 
             properties={properties}
             initialData={editingAgreement}
             onSubmit={handleFormSubmit}
-            isLoading={isLoading}
             setErrorMessage={setErrorMessage}
           />
         )}
       </CModalBody>
       <CModalFooter>
-        <CButton color="secondary" onClick={resetModal} disabled={isLoading}>
+        <CButton color="secondary" onClick={() => setVisible(false)} disabled={isLoading}>
           Cancel
         </CButton>
       </CModalFooter>
