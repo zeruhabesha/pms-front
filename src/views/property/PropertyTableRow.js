@@ -24,7 +24,7 @@ const PropertyTableRow = ({ index, property, onEdit, onDelete, onView }) => {
           <CIcon icon={cilSearch} />
         </CButton>
         <CButton
-          color="dark"
+          color="light"
           size="sm"
           className="me-2"
           onClick={() => onEdit(property)}
@@ -34,7 +34,8 @@ const PropertyTableRow = ({ index, property, onEdit, onDelete, onView }) => {
           <CIcon icon={cilPencil} />
         </CButton>
         <CButton
-          color="danger"
+          color="light"
+          style={{color:`red`}}
           size="sm"
           onClick={() => onDelete(property)}
           title="Delete Property"

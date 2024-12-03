@@ -146,17 +146,17 @@ const ViewMaintenance = () => {
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Maintenance Records</strong>
             <div>
-              <button className="learn-more" onClick={handleAddMaintenance}>
+              {/* <button className="learn-more" onClick={handleAddMaintenance}>
                 <span className="circle" aria-hidden="true">
                   <span className="icon arrow"></span>
                 </span>
                 <span className="button-text">Add Maintenance Record</span>
-              </button>
+              </button> */}
               <button className="learn-more" onClick={handleAddTenantRequest}>
                 <span className="circle" aria-hidden="true">
                   <span className="icon arrow"></span>
                 </span>
-                <span className="button-text">Add Tenant Request</span>
+                <span className="button-text">Add Request</span>
               </button>
             </div>
           </CCardHeader>

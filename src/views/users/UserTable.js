@@ -320,6 +320,7 @@ const UserTable = ({
                   <CTableDataCell>
                   <CButton
                     color="light"
+                    style={{color:`green`}} 
                     size="sm"
                     className="me-2"
                     onClick={() => handlePermissionsClick(user)}
@@ -331,7 +332,7 @@ const UserTable = ({
                     <CButton color="light" size="sm" className="me-2" onClick={() => handleEdit(user)} title="Edit">
                       <CIcon icon={cilPencil} />
                     </CButton>
-                    <CButton color="danger" size="sm" className="me-2" onClick={() => handleDelete(user)} title="Delete">
+                    <CButton color="light" style={{color:`red`}} size="sm" className="me-2" onClick={() => handleDelete(user)} title="Delete">
                       <CIcon icon={cilTrash} />
                     </CButton>
                     <CButton
@@ -373,7 +374,7 @@ const UserTable = ({
 
       <div className="d-flex justify-content-between align-items-center mt-3">
         <span>Total Users: {users.length}</span>
-        <CPagination className="d-inline-flex">
+ <CPagination className="d-inline-flex">
   <CPaginationItem
     aria-label="Previous"
     disabled={currentPage === 1}

@@ -279,8 +279,9 @@ const AdminTable = ({
         </CTable>
       </div>
   
-      <div className="d-flex justify-content-between align-items-center mb-2">
-  <CPagination className="d-inline-flex">
+      <div className="d-flex justify-content-between align-items-center mt-3">
+        <span>Total Admins: {admins.length}</span>
+  <CPagination className="d-inline-flex" >
     <CPaginationItem disabled={currentPage === 1} onClick={() => handlePageChange(1)}>
       &laquo;
     </CPaginationItem>
@@ -289,10 +290,11 @@ const AdminTable = ({
     </CPaginationItem>
     {[...Array(totalPages)].map((_, index) => (
       <CPaginationItem
+      style={{background:`black`}}
         key={index + 1}
         active={index + 1 === currentPage}
         onClick={() => handlePageChange(index + 1)}
-      >
+       >
         {index + 1}
       </CPaginationItem>
     ))}
@@ -303,9 +305,7 @@ const AdminTable = ({
       &raquo;
     </CPaginationItem>
   </CPagination>
-  <div className="float-end">
-    <span>Total Admins: {admins.length}</span>
-  </div>
+
 </div>
 
     </div>

@@ -84,7 +84,7 @@ const SuperAdminTable = ({
                     <CButton color="light" size="sm" className="me-2" onClick={() => handleEdit(admin)} title="Edit">
                       <CIcon icon={cilPencil} />
                     </CButton>
-                    <CButton color="danger" size="sm" onClick={() => handleDelete(admin)} title="Delete">
+                    <CButton color="light" style={{color:`red`}} size="sm" onClick={() => handleDelete(admin)} title="Delete">
                       <CIcon icon={cilTrash} />
                     </CButton>
                   </CTableDataCell>

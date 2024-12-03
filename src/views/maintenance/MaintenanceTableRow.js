@@ -49,7 +49,7 @@ const MaintenanceTableRow = ({ maintenance, index, onEdit, onDelete, onViewDetai
       </CTableDataCell>
       <CTableDataCell>
         <CButton
-          color="secondary"
+          color="light"
           size="sm"
           onClick={() => onViewDetails(maintenance)}
           className="me-2"
@@ -57,7 +57,7 @@ const MaintenanceTableRow = ({ maintenance, index, onEdit, onDelete, onViewDetai
           <FontAwesomeIcon icon={faEye} />
         </CButton>
         <CButton
-          color="secondary"
+          color="light"
           size="sm"
           onClick={() => onEdit(maintenance)}
           className="me-2"
@@ -65,7 +65,8 @@ const MaintenanceTableRow = ({ maintenance, index, onEdit, onDelete, onViewDetai
           <FontAwesomeIcon icon={faEdit} />
         </CButton>
         <CButton
-          color="danger"
+          color="light"
+          style={{color:`red`}}
           size="sm"
           onClick={() => onDelete(maintenance)}
         >
