@@ -1,17 +1,17 @@
-import axios from 'axios';
-import httpCommon from '../http-common';
-import AuthService from './auth.services'; // Import AuthService here
+import axios from 'axios'
+import httpCommon from '../http-common'
+import AuthService from './auth.services' // Import AuthService here
 
 class SuperAdminService {
   constructor() {
-    this.baseURL = `${httpCommon.defaults.baseURL}/users`; // Use httpCommon.defaults.baseURL
+    this.baseURL = `${httpCommon.defaults.baseURL}/users` // Use httpCommon.defaults.baseURL
   }
 
   getAuthHeader() {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token')
     return {
       Authorization: `Bearer ${token}`,
-    };
+    }
   }
 
   async fetchSuperAdmins(page = 1, limit = 5, searchTerm = '') {
@@ -19,33 +19,20 @@ class SuperAdminService {
       const response = await httpCommon.get(`/users/super-admin`, {
         headers: this.getAuthHeader(),
         params: { page, limit, search: searchTerm },
-      });
+      })
       return {
         users: response.data?.data?.users || [],
         totalPages: response.data?.data?.totalPages || 1,
         totalUsers: response.data?.data?.totalUsers || 0,
         currentPage: response.data?.data?.currentPage || page,
-      };
+      }
     } catch (error) {
-      throw this.handleError(error);
+      throw this.handleError(error)
     }
   }
-  
+
   async addSuperAdmin(superAdminData) {
     try {
-<<<<<<< HEAD
-      // Check if user is authenticated
-      // if (!AuthService.isAuthenticated()) {
-      //   throw {
-      //     message: 'Not authenticated',
-      //     status: 401,
-      //     isAuthError: true,
-      //   };
-      // }
-    
-=======
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
-      
       // Make the API call to add Super Admin
       const response = await httpCommon.post('/users/superadmin', superAdminData, {
         headers: {
@@ -53,62 +40,62 @@ class SuperAdminService {
           'Content-Type': 'application/json',
         },
       })
-      return response.data?.data;
+      return response.data?.data
     } catch (error) {
       // Throw an error with meaningful message and status
       throw {
         message: error.response?.data?.message || error.message || 'An error occurred',
         status: error.response?.status || 500,
         isAuthError: error.response?.status === 401,
-      };
+      }
     }
   }
 
   async updateSuperAdmin(id, superAdminData) {
     if (!superAdminData) {
-      throw new Error("No data provided for update");
+      throw new Error('No data provided for update')
     }
-  
+
     try {
       const payload = {
         name: superAdminData.name,
         email: superAdminData.email,
         phoneNumber: superAdminData.phoneNumber,
         status: superAdminData.status || 'active',
-      };
-  
+      }
+
       const response = await httpCommon.put(`/users/${id}`, payload, {
         headers: {
           ...this.getAuthHeader(),
           'Content-Type': 'application/json',
         },
-      });
-  
+      })
+
       if (!response.data) {
-        throw new Error('No data received from server');
+        throw new Error('No data received from server')
       }
-  
-      return response.data?.data;
+
+      return response.data?.data
     } catch (error) {
-      console.error('SuperAdmin Update Error:', error.response?.data || error);
-      throw this.handleError(error);
+      console.error('SuperAdmin Update Error:', error.response?.data || error)
+      throw this.handleError(error)
     }
   }
 
   async uploadSuperAdminPhoto(id, photoFile) {
     try {
-      const formData = new FormData();
-      formData.append('photo', photoFile);
+      const formData = new FormData()
+      formData.append('photo', photoFile)
 
       const response = await httpCommon.post(`/users/${id}/photo`, formData, {
         headers: {
           ...this.getAuthHeader(),
           'Content-Type': 'multipart/form-data',
         },
-      });
-      return response.data?.photoUrl;
+      })
+      return response.data?.photoUrl
     } catch (error) {
-      throw this.handleError(error);
+      throw this.handleError(error)
     }
   }
 
@@ -116,17 +103,17 @@ class SuperAdminService {
     return {
       message: error.response?.data?.message || error.message,
       status: error.response?.status,
-    };
+    }
   }
 
   async deleteSuperAdmin(id) {
     try {
       await httpCommon.delete(`/users/${id}`, {
         headers: this.getAuthHeader(),
-      });
-      return id;
+      })
+      return id
     } catch (error) {
-      throw this.handleError(error);
+      throw this.handleError(error)
     }
   }
 
@@ -134,8 +121,8 @@ class SuperAdminService {
     return {
       message: error.response?.data?.message || error.message,
       status: error.response?.status,
-    };
+    }
   }
 }
 
-export default new SuperAdminService();
+export default new SuperAdminService()

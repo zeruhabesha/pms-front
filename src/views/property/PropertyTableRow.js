@@ -1,35 +1,11 @@
-<<<<<<< HEAD
-// src/components/PropertyTableRow.js
-import React from 'react';
-import { CTableRow, CTableHeaderCell, CTableDataCell, CButton } from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import { cilPencil, cilTrash } from '@coreui/icons';
-
-const PropertyTableRow = ({ index, property, onEdit, onDelete }) => (
-  <CTableRow>
-    <CTableHeaderCell scope="row">{index}</CTableHeaderCell>
-    <CTableDataCell>{property.title}</CTableDataCell>
-    <CTableDataCell>{property.description}</CTableDataCell>
-    <CTableDataCell>{property.address}</CTableDataCell>
-    <CTableDataCell>{property.propertyType}</CTableDataCell>
-    <CTableDataCell>
-      <CButton color="dark" size="sm" className="me-2" onClick={() => onEdit(property)}>
-        <CIcon icon={cilPencil} />
-      </CButton>
-      <CButton color="danger" size="sm" onClick={() => onDelete(property.id)}>
-        <CIcon icon={cilTrash} />
-      </CButton>
-    </CTableDataCell>
-  </CTableRow>
-);
-=======
-import React from 'react';
-import { CTableRow, CTableHeaderCell, CTableDataCell, CButton } from '@coreui/react';
-import CIcon from '@coreui/icons-react';
-import { cilPencil, cilTrash, cilSearch } from '@coreui/icons';
+/* eslint-disable react/prop-types */
+import React from 'react'
+import { CTableRow, CTableHeaderCell, CTableDataCell, CButton } from '@coreui/react'
+import CIcon from '@coreui/icons-react'
+import { cilPencil, cilTrash, cilSearch } from '@coreui/icons'
 
 const PropertyTableRow = ({ index, property, onEdit, onDelete, onView }) => {
-  const isEditable = !!(property && onEdit); // Ensure `property` and `onEdit` are valid
+  const isEditable = !!(property && onEdit) // Ensure `property` and `onEdit` are valid
 
   return (
     <CTableRow>
@@ -60,7 +36,7 @@ const PropertyTableRow = ({ index, property, onEdit, onDelete, onView }) => {
         </CButton>
         <CButton
           color="light"
-          style={{color:`red`}}
+          style={{ color: `red` }}
           size="sm"
           onClick={() => onDelete(property)}
           title="Delete Property"
@@ -69,8 +45,7 @@ const PropertyTableRow = ({ index, property, onEdit, onDelete, onView }) => {
         </CButton>
       </CTableDataCell>
     </CTableRow>
-  );
-};
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
+  )
+}
 
-export default PropertyTableRow;
+export default PropertyTableRow

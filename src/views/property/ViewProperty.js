@@ -1,89 +1,43 @@
-<<<<<<< HEAD
+/* eslint-disable react/jsx-no-undef */
 // src/components/ViewProperty.js
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchProperties, deleteProperty } from '../../api/actions/PropertyAction';
-import { CRow, CCol, CCard, CCardBody, CCardHeader, CButton, CFormInput } from '@coreui/react';
-import PropertyTable from './PropertyTable';
-import AddProperty from './AddProperty';
-
-const ViewProperty = () => {
-  const dispatch = useDispatch();
-  const { properties, loading, error } = useSelector((state) => state.property);
-
-  const [searchTerm, setSearchTerm] = useState('');
-=======
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchProperties, deleteProperty, updatePropertyPhoto } from '../../api/actions/PropertyAction';
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchProperties, deleteProperty } from '../../api/actions/PropertyAction'
 import {
   CRow,
   CCol,
   CCard,
   CCardBody,
   CCardHeader,
+  CButton,
   CFormInput,
   CModal,
-  CModalBody,
   CModalHeader,
   CModalTitle,
-  CButton,
-  CSpinner,
-} from '@coreui/react';
-import { CIcon } from '@coreui/icons-react';
-import { cilList, cilTrash, cilPencil, cilFullscreen } from '@coreui/icons';
-import PropertyDetails from './PropertyDetails';
-import PropertyTable from './PropertyTable';
-import AddProperty from './AddProperty';
-import PropertyDeleteModal from './PropertyDeleteModal';
-import '../Super.scss';
-import './property.scss';
+  CModalBody,
+} from '@coreui/react'
+import PropertyTable from './PropertyTable'
+import AddProperty from './AddProperty'
 
 const ViewProperty = () => {
-  const dispatch = useDispatch();
-  const { properties, loading, error, totalPages } = useSelector((state) => state.property);
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [visible, setVisible] = useState(false);
-<<<<<<< HEAD
-  const [editingProperty, setEditingProperty] = useState(null);
+  const dispatch = useDispatch()
+  const { properties, loading, error } = useSelector((state) => state.property)
 
-  const itemsPerPage = 5;
+  const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [visible, setVisible] = useState(false)
+  const [viewModal, setViewModal] = useState(false)
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
+  const [editingProperty, setEditingProperty] = useState(null)
+  const [viewingProperty, setViewingProperty] = useState(null)
+  const [propertyToDelete, setPropertyToDelete] = useState(null)
+  const [propertyModalVisible, setPropertyModalVisible] = useState(false)
+  const [photoToUpdate, setPhotoToUpdate] = useState(null) // New state for the photo to update
+  const [newPhoto, setNewPhoto] = useState(null) // New state for the new photo
+  const [expandedImage, setExpandedImage] = useState(null) // State to hold the image to be expanded
+  const [isFullscreenModalVisible, setFullscreenModalVisible] = useState(false) // Fullscreen modal visibility
 
-  useEffect(() => {
-    dispatch(fetchProperties());
-  }, [dispatch]);
-
-  useEffect(() => {
-    console.log("Properties from Redux in Component:", properties); // Debug log to check data in component
-  }, [properties]);
-
-  const handleAddProperty = () => {
-    setEditingProperty(null);
-    setVisible(true);
-  };
-
-  const handleEdit = (property) => {
-    setEditingProperty(property);
-    setVisible(true);
-  };
-
-  const handleDelete = (id) => {
-    dispatch(deleteProperty(id));
-=======
-  const [viewModal, setViewModal] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [editingProperty, setEditingProperty] = useState(null);
-  const [viewingProperty, setViewingProperty] = useState(null);
-  const [propertyToDelete, setPropertyToDelete] = useState(null);
-  const [propertyModalVisible, setPropertyModalVisible] = useState(false);
-  const [photoToUpdate, setPhotoToUpdate] = useState(null); // New state for the photo to update
-  const [newPhoto, setNewPhoto] = useState(null); // New state for the new photo
-  const [expandedImage, setExpandedImage] = useState(null); // State to hold the image to be expanded
-  const [isFullscreenModalVisible, setFullscreenModalVisible] = useState(false); // Fullscreen modal visibility
-
-  const itemsPerPage = 5;
+  const itemsPerPage = 5
 
   // Fetch properties
   useEffect(() => {
@@ -94,128 +48,132 @@ const ViewProperty = () => {
             page: currentPage,
             limit: itemsPerPage,
             search: searchTerm,
-          })
-        ).unwrap();
+          }),
+        ).unwrap()
       } catch (error) {
-        console.error(error.message || 'Failed to fetch properties');
+        console.error(error.message || 'Failed to fetch properties')
       }
-    };
+    }
 
     const timeoutId = setTimeout(() => {
-      loadProperties();
-    }, 300);
+      loadProperties()
+    }, 300)
 
-    return () => clearTimeout(timeoutId);
-  }, [dispatch, currentPage, itemsPerPage, searchTerm]);
+    return () => clearTimeout(timeoutId)
+  }, [dispatch, currentPage, itemsPerPage, searchTerm])
 
   const handleAddProperty = () => {
-    setEditingProperty(null); // Clear editing state for adding a new property
-    setPropertyModalVisible(true);
-  };
+    setEditingProperty(null) // Clear editing state for adding a new property
+    setPropertyModalVisible(true)
+  }
 
   const handleEdit = (property) => {
     const propertyToEdit = {
       ...property,
       existingPhotos: property.photos || [],
       photos: [], // Clear current photos in the form
-    };
-    setEditingProperty(propertyToEdit);
-    setPropertyModalVisible(true);
-  };
+    }
+    setEditingProperty(propertyToEdit)
+    setPropertyModalVisible(true)
+  }
 
   const openDeleteModal = (property) => {
-    setPropertyToDelete(property);
-    setDeleteModalVisible(true);
-  };
+    setPropertyToDelete(property)
+    setDeleteModalVisible(true)
+  }
 
   const confirmDelete = async () => {
     if (!propertyToDelete?._id) {
-      console.error('Invalid property ID');
-      return;
+      console.error('Invalid property ID')
+      return
     }
 
     try {
-      await dispatch(deleteProperty(propertyToDelete._id)).unwrap();
-      dispatch(fetchProperties({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
-      setDeleteModalVisible(false);
-      console.log('Property deleted successfully');
+      await dispatch(deleteProperty(propertyToDelete._id)).unwrap()
+      dispatch(fetchProperties({ page: currentPage, limit: itemsPerPage, search: searchTerm }))
+      setDeleteModalVisible(false)
+      console.log('Property deleted successfully')
     } catch (error) {
-      console.error(error.message || 'Failed to delete property');
+      console.error(error.message || 'Failed to delete property')
     }
-  };
+  }
 
   const handleView = (property) => {
-    setViewingProperty(property);
-    setViewModal(true);
-  };
+    setViewingProperty(property)
+    setViewModal(true)
+  }
 
   // Handlers for photo update/delete
   const handlePhotoDelete = async (photo) => {
     try {
-      await dispatch(deletePropertyPhoto(viewingProperty._id, photo)); // Replace with actual action
+      await dispatch(deletePropertyPhoto(viewingProperty._id, photo)) // Replace with actual action
       setViewingProperty((prev) => ({
         ...prev,
         photos: prev.photos.filter((p) => p !== photo),
-      }));
+      }))
     } catch (error) {
-      console.error("Error deleting photo", error);
+      console.error('Error deleting photo', error)
     }
-  };
-  
+  }
+
   const handlePhotoUpdate = async (photoToUpdate, newPhoto) => {
-    const formData = new FormData();
-    formData.append("photo", newPhoto); // Append new photo to FormData
-  
+    const formData = new FormData()
+    formData.append('photo', newPhoto) // Append new photo to FormData
+
     try {
-      await dispatch(updatePropertyPhoto(viewingProperty._id, formData)); // Replace with actual action
+      await dispatch(updatePropertyPhoto(viewingProperty._id, formData)) // Replace with actual action
       setViewingProperty((prev) => ({
         ...prev,
-        photos: prev.photos.map((photo) =>
-          photo === photoToUpdate ? newPhoto.name : photo // Replace old photo with new photo name
+        photos: prev.photos.map(
+          (photo) => (photo === photoToUpdate ? newPhoto.name : photo), // Replace old photo with new photo name
         ),
-      }));
+      }))
     } catch (error) {
-      console.error("Error updating photo", error);
+      console.error('Error updating photo', error)
     }
-  };
+  }
 
-  const filteredProperties = Array.isArray(properties) ? properties : [];
-  const currentProperties = filteredProperties;
+  const filteredProperties = Array.isArray(properties) ? properties : []
+  const currentProperties = filteredProperties
 
   // Handle the full-screen modal for image
   const handleExpandImage = (photo) => {
-    setExpandedImage(photo);
-    setFullscreenModalVisible(true); // Show the full-screen modal
-  };
+    setExpandedImage(photo)
+    setFullscreenModalVisible(true) // Show the full-screen modal
+  }
 
   const handleCloseFullscreen = () => {
-    setFullscreenModalVisible(false);
-    setExpandedImage(null); // Reset the expanded image
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
-  };
+    setFullscreenModalVisible(false)
+    setExpandedImage(null) // Reset the expanded image
+  }
 
   // Ensure properties is an array before applying .filter()
-  const filteredProperties = Array.isArray(properties)
-    ? properties.filter((property) =>
-        property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.propertyType.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
+  // const filteredProperties = Array.isArray(properties)
+  //   ? properties.filter(
+  //       (property) =>
+  //         property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  //         property.propertyType.toLowerCase().includes(searchTerm.toLowerCase()),
+  //     )
+  //   : []
 
-  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage);
-  const currentProperties = filteredProperties.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(filteredProperties.length / itemsPerPage)
+  // const currentProperties = filteredProperties.slice(
+  //   (currentPage - 1) * itemsPerPage,
+  //   currentPage * itemsPerPage,
+  // )
 
   return (
     <CRow>
-<<<<<<< HEAD
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Properties</strong>
-            <CButton onClick={handleAddProperty}>Add Property</CButton>
+            <button className="learn-more" onClick={handleAddProperty}>
+              <span className="circle" aria-hidden="true">
+                <span className="icon arrow"></span>
+              </span>
+              <span className="button-text">Add Property</span>
+            </button>
           </CCardHeader>
           <CCardBody>
             <CFormInput
@@ -229,66 +187,26 @@ const ViewProperty = () => {
               <div>Loading...</div>
             ) : error ? (
               <div>Error: {error}</div>
-            ) : (
+            ) : currentProperties.length > 0 ? (
               <PropertyTable
                 properties={currentProperties}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
+                onDelete={openDeleteModal}
+                onView={handleView}
                 currentPage={currentPage}
-                itemsPerPage={itemsPerPage}
                 setCurrentPage={setCurrentPage}
                 totalPages={totalPages}
+                itemsPerPage={itemsPerPage}
               />
+            ) : (
+              <div>No properties found</div>
             )}
           </CCardBody>
         </CCard>
       </CCol>
-      <AddProperty visible={visible} setVisible={setVisible} editingProperty={editingProperty} />
-=======
-    <CCol xs={12}>
-      <CCard className="mb-4">
-        <CCardHeader className="d-flex justify-content-between align-items-center">
-          <strong>Properties</strong>
-          <button className="learn-more" onClick={handleAddProperty}>
-                <span className="circle" aria-hidden="true">
-                  <span className="icon arrow"></span>
-                </span>
-                <span className="button-text">Add Property</span>
-              </button>
-        </CCardHeader>
-        <CCardBody>
-          <CFormInput
-            type="text"
-            placeholder="Search by title or property type"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="mb-3"
-          />
-          {loading ? (
-            <div>Loading...</div>
-          ) : error ? (
-            <div>Error: {error}</div>
-          ) : currentProperties.length > 0 ? (
-            <PropertyTable
-              properties={currentProperties}
-              onEdit={handleEdit}
-              onDelete={openDeleteModal}
-              onView={handleView}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              totalPages={totalPages}
-              itemsPerPage={itemsPerPage}
-            />
-          ) : (
-            <div>No properties found</div>
-          )}
-        </CCardBody>
-      </CCard>
-    </CCol>
 
-
- {/* Insert PropertyDetails Component */}
- <PropertyDetails
+      {/* Insert PropertyDetails Component */}
+      <PropertyDetails
         visible={viewModal}
         setVisible={setViewModal}
         viewingProperty={viewingProperty}
@@ -411,16 +329,15 @@ const ViewProperty = () => {
         />
       )} */}
 
-     {/* Delete Property Modal */}
-     <PropertyDeleteModal
+      {/* Delete Property Modal */}
+      <PropertyDeleteModal
         visible={deleteModalVisible}
         setDeleteModalVisible={setDeleteModalVisible}
         propertyToDelete={propertyToDelete}
         confirmDelete={confirmDelete}
       />
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
     </CRow>
-  );
-};
+  )
+}
 
-export default ViewProperty;
+export default ViewProperty

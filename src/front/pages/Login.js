@@ -1,12 +1,6 @@
-<<<<<<< HEAD
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-=======
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
 import {
   CForm,
   CFormInput,
@@ -16,16 +10,6 @@ import {
   CCardBody,
   CAlert,
   CContainer,
-<<<<<<< HEAD
-} from '@coreui/react';
-import { useDispatch, useSelector } from 'react-redux';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { login } from '../../api/actions/authActions';
-import styles from './Login.module.scss';
-=======
 } from '@coreui/react'
 import { useDispatch, useSelector } from 'react-redux'
 import { ToastContainer, toast } from 'react-toastify'
@@ -33,7 +17,6 @@ import 'react-toastify/dist/ReactToastify.css'
 import { login } from '../../api/actions/authActions'
 import backgroundImage from '../../assets/images/hero-bg-abstract.jpg'
 import { FaLongArrowAltRight } from 'react-icons/fa'
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -45,30 +28,18 @@ const Login = () => {
   const { loading, error } = auth
 
   const handleSubmit = async (e) => {
-<<<<<<< HEAD
-    e.preventDefault();
-    const errors = {};
-    if (!email) errors.email = 'Email is required';
-    if (!password) errors.password = 'Password is required';
-=======
     e.preventDefault()
     const errors = {}
     if (!email) errors.email = 'Email is required'
     if (!password) errors.password = 'Password is required'
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
 
     if (Object.keys(errors).length > 0) {
       setErrors(errors)
     } else {
       setErrors({})
       try {
-<<<<<<< HEAD
-        const result = await dispatch(login({ email, password })).unwrap();
-        toast.success('Login successful!', { autoClose: 2000, position: 'top-right' });
-=======
         const result = await dispatch(login({ email, password })).unwrap()
         toast.success('Login successful!', { autoClose: 2000, position: 'top-right' })
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
 
         if (result.token) {
           navigate('/dashboard', { replace: true })
@@ -76,32 +47,6 @@ const Login = () => {
           throw new Error('Login failed: No token returned')
         }
       } catch (error) {
-<<<<<<< HEAD
-        const errorMessage = error.response?.data?.message || 'An error occurred during login';
-        setErrors({ general: errorMessage });
-        toast.error(errorMessage, { autoClose: 3000, position: 'top-right' });
-      }
-    }
-  };
-
-  return (
-    <div>
-      <Navbar />
-      <CContainer className={styles.container}>
-        <CCard className={styles.card}>
-          <CCardHeader className={styles.cardHeader}>
-            <motion.h1
-              initial={{ opacity: 0, y: -50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              Login
-            </motion.h1>
-          </CCardHeader>
-          <CCardBody className={styles.cardBody}>
-            <CForm onSubmit={handleSubmit}>
-              <div className={styles.formInput}>
-=======
         const errorMessage = error.response?.data?.message || 'An error occurred during login'
         setErrors({ general: errorMessage })
         toast.error(errorMessage, { autoClose: 3000, position: 'top-right' })
@@ -168,7 +113,6 @@ const Login = () => {
           <CCardBody style={{ padding: '2rem' }}>
             <CForm onSubmit={handleSubmit}>
               <div style={{ marginBottom: '1rem' }}>
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
                 <CFormLabel htmlFor="email">Email</CFormLabel>
                 <CFormInput
                   type="email"
@@ -178,12 +122,6 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   invalid={!!errors.email}
                 />
-<<<<<<< HEAD
-                {errors.email && <CAlert color="danger" className={styles.alertDanger}>{errors.email}</CAlert>}
-              </div>
-
-              <div className={styles.formInput}>
-=======
                 {errors.email && (
                   <CAlert
                     color="danger"
@@ -199,7 +137,6 @@ const Login = () => {
               </div>
 
               <div style={{ marginBottom: '1rem' }}>
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
                 <CFormLabel htmlFor="password">Password</CFormLabel>
                 <CFormInput
                   type="password"
@@ -209,13 +146,6 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   invalid={!!errors.password}
                 />
-<<<<<<< HEAD
-                {errors.password && <CAlert color="danger" className={styles.alertDanger}>{errors.password}</CAlert>}
-              </div>
-
-              {errors.general && (
-                <CAlert color="danger" className={styles.alertDanger}>
-=======
                 {errors.password && (
                   <CAlert
                     color="danger"
@@ -239,7 +169,6 @@ const Login = () => {
                     textAlign: 'center',
                   }}
                 >
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
                   {errors.general}
                 </CAlert>
               )}
@@ -249,9 +178,6 @@ const Login = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-<<<<<<< HEAD
-                <CButton type="submit" color="primary" className={styles.button} disabled={loading}>
-=======
                 <CButton
                   type="submit"
                   color="primary"
@@ -263,17 +189,11 @@ const Login = () => {
                   }}
                   disabled={loading}
                 >
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
                   {loading ? 'Logging in...' : 'Login'}
                 </CButton>
               </motion.div>
             </CForm>
             <p className="mt-4 text-center">
-<<<<<<< HEAD
-              Don&apos;t have an account?{' '}
-              <a href="/register" className={styles.link}>
-                Register
-=======
               <a
                 href="/"
                 style={{
@@ -283,7 +203,6 @@ const Login = () => {
               >
                 Return to Home
                 <FaLongArrowAltRight style={{ marginLeft: 5 }} />
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
               </a>
             </p>
           </CCardBody>
@@ -304,8 +223,4 @@ const Login = () => {
   )
 }
 
-<<<<<<< HEAD
-export default Login;
-=======
 export default Login
->>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
