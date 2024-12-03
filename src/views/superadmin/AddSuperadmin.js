@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { 
-  CButton, 
   CModal, 
   CModalBody, 
   CModalHeader, 
   CModalTitle, 
   CModalFooter, 
   CForm, 
-  CFormLabel, 
   CFormInput, 
   CRow, 
   CCol,
   CCard,
   CCardBody,
   CInputGroup,
-  CInputGroupText,
-  CFormSelect,
+  CButton,
   CAlert
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
+<<<<<<< HEAD
 import { cilUser, cilEnvelopeClosed, cilLockLocked, cilPhone, cilLocationPin, cilBadge } from '@coreui/icons';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,14 +25,23 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
   const navigate = useNavigate();
 
   // Initialize state with fallback values using optional chaining
+=======
+import { cilUser, cilEnvelopeClosed, cilLockLocked, cilPhone, cilLocationPin } from '@coreui/icons';
+import CustomSwitch from './CustomSwitch';
+
+const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }) => {
+>>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
+<<<<<<< HEAD
   const [status, setStatus] = useState('active');
+=======
+  const [status, setStatus] = useState(true); // true for 'active', false for 'inactive'
+>>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
   const [errorMessage, setErrorMessage] = useState('');
-  const { error } = useSelector((state) => state.superAdmin);
 
   useEffect(() => {
     // Reset form fields each time editingSuperAdmin changes
@@ -45,14 +51,22 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
       setPassword(editingSuperAdmin.password || '');
       setPhoneNumber(editingSuperAdmin.phoneNumber || '');
       setAddress(editingSuperAdmin.address || '');
+<<<<<<< HEAD
       setStatus(editingSuperAdmin.status === 'inactive' ? 'inactive' : 'active');
+=======
+      setStatus(editingSuperAdmin.status !== 'inactive'); // true if active
+>>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
     } else {
       setName('');
       setEmail('');
       setPassword('');
       setPhoneNumber('');
       setAddress('');
+<<<<<<< HEAD
       setStatus('Active');
+=======
+      setStatus(true); // default to active
+>>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
     }
     setErrorMessage('');
   }, [editingSuperAdmin]);
@@ -74,7 +88,11 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
       phoneNumber,
       address,
       photo: '',
+<<<<<<< HEAD
       status: status.toLowerCase(),
+=======
+      status: status ? 'active' : 'inactive',
+>>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
       ...(editingSuperAdmin ? { id: editingSuperAdmin.id } : {}),
     };
 
@@ -93,7 +111,7 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
     setPassword('');
     setPhoneNumber('');
     setAddress('');
-    setStatus('Active');
+    setStatus(true);
     setErrorMessage('');
     setVisible(false);
   };
@@ -106,7 +124,7 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
       backdrop="static"
       size="lg"
     >
-      <CModalHeader className="bg-primary text-white">
+      <CModalHeader className="bg-dark text-white">
         <CModalTitle>
           {editingSuperAdmin ? 'Edit Super Admin' : 'Add Super Admin'}
         </CModalTitle>
@@ -114,18 +132,15 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
       <CModalBody>
         <CCard className="border-0 shadow-sm">
           <CCardBody>
-            {(error || errorMessage) && (
+            {errorMessage && (
               <CAlert color="danger" className="mb-4">
-                {error?.message || errorMessage}
+                {errorMessage}
               </CAlert>
             )}
             <CForm onSubmit={handleSubmit}>
               <CRow className="g-4">
                 <CCol xs={12}>
                   <CInputGroup>
-                    <CInputGroupText>
-                      <CIcon icon={cilUser} />
-                    </CInputGroupText>
                     <CFormInput
                       placeholder="Full Name"
                       value={name}
@@ -138,9 +153,6 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
 
                 <CCol xs={12}>
                   <CInputGroup>
-                    <CInputGroupText>
-                      <CIcon icon={cilEnvelopeClosed} />
-                    </CInputGroupText>
                     <CFormInput
                       type="email"
                       placeholder="Email Address"
@@ -155,9 +167,6 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
                 {!editingSuperAdmin && (
                   <CCol xs={12}>
                     <CInputGroup>
-                      <CInputGroupText>
-                        <CIcon icon={cilLockLocked} />
-                      </CInputGroupText>
                       <CFormInput
                         type="password"
                         placeholder="Password"
@@ -172,9 +181,6 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
 
                 <CCol xs={12}>
                   <CInputGroup>
-                    <CInputGroupText>
-                      <CIcon icon={cilPhone} />
-                    </CInputGroupText>
                     <CFormInput
                       placeholder="Phone Number"
                       value={phoneNumber}
@@ -186,9 +192,6 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
 
                 <CCol xs={12}>
                   <CInputGroup>
-                    <CInputGroupText>
-                      <CIcon icon={cilLocationPin} />
-                    </CInputGroupText>
                     <CFormInput
                       placeholder="Address"
                       value={address}
@@ -199,6 +202,7 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
 
                 <CCol xs={12}>
                   <CInputGroup>
+<<<<<<< HEAD
                     <CInputGroupText>
                       <CIcon icon={cilBadge} />
                     </CInputGroupText>
@@ -210,22 +214,22 @@ const AddSuperAdmin = ({ visible, setVisible, editingSuperAdmin = null, onSave }
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
                     </CFormSelect>
+=======
+                    <CustomSwitch
+                      label="Active Status"
+                      checked={status}
+                      onChange={(e) => setStatus(e.target.checked)}
+                    />
+>>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
                   </CInputGroup>
                 </CCol>
               </CRow>
 
               <CModalFooter className="border-top-0">
-                <CButton 
-                  color="secondary" 
-                  variant="ghost"
-                  onClick={handleClose}
-                >
+                <CButton color="secondary" variant="ghost" onClick={handleClose}>
                   Cancel
                 </CButton>
-                <CButton 
-                  color="primary" 
-                  type="submit"
-                >
+                <CButton color="dark" type="submit">
                   {editingSuperAdmin ? 'Update Super Admin' : 'Add Super Admin'}
                 </CButton>
               </CModalFooter>

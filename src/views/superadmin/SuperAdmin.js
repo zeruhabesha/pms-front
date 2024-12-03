@@ -4,7 +4,7 @@ import ViewSuperAdmin from './ViewSuperAdmin'
 const SuperAdmin = () => {
   return (
     <div>
-        <ViewSuperAdmin/>
+        <ViewSuperAdmin />
     </div>
   )
 }

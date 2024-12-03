@@ -33,6 +33,7 @@ class SuperAdminService {
   
   async addSuperAdmin(superAdminData) {
     try {
+<<<<<<< HEAD
       // Check if user is authenticated
       // if (!AuthService.isAuthenticated()) {
       //   throw {
@@ -42,6 +43,8 @@ class SuperAdminService {
       //   };
       // }
     
+=======
+>>>>>>> acfa61701d3d2d693a4c8429268beedde686e0a3
       
       // Make the API call to add Super Admin
       const response = await httpCommon.post('/users/superadmin', superAdminData, {

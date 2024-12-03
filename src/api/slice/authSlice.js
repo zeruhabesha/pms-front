@@ -1,10 +1,17 @@
+// authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 import { login, logout } from '../actions/authActions';
+import { encryptData, decryptData } from '../utils/crypto';
+
+const getDecryptedData = (key) => {
+  const encryptedData = localStorage.getItem(key);
+  return encryptedData ? decryptData(encryptedData) : null;
+};
 
 const initialState = {
-  isAuthenticated: !!localStorage.getItem('token'), // Check if token exists in localStorage
-  user: JSON.parse(localStorage.getItem('user')) || null, // Parse user info from localStorage
-  token: localStorage.getItem('token') || null, // Get token from localStorage
+  isAuthenticated: !!localStorage.getItem('token'),
+  user: getDecryptedData('user'),
+  token: getDecryptedData('token'),
   loading: false,
   error: null,
 };
@@ -33,9 +40,9 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.loading = false;
 
-        // Store the token and user in localStorage
-        localStorage.setItem('token', action.payload.token);
-        localStorage.setItem('user', JSON.stringify(action.payload.user));
+        // Store encrypted data
+        localStorage.setItem('token', encryptData(action.payload.token));
+        localStorage.setItem('user', encryptData(action.payload.user));
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -45,8 +52,6 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.user = null;
         state.token = null;
-
-        // Clear localStorage on logout
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       });
