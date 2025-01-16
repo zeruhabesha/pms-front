@@ -204,8 +204,7 @@ const ComplaintsTable = ({
                 exportToPDF={exportToPDF}
                  searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-                totalComplaints={totalComplaints}
-                
+               
              />
            <ComplaintsTableData
                complaints={complaints}
@@ -228,7 +227,33 @@ const ComplaintsTable = ({
                  handleAssignClick={handleAssignClick}
                 role={role}
            />
-           
+                <div className="pagination-container d-flex justify-content-between align-items-center mt-3">
+                        <span>Total Complaints: {totalComplaints}</span>
+                         <CPagination className="d-inline-flex" >
+                            <CPaginationItem disabled={currentPage === 1} onClick={() => handlePageChange(1)}>
+                              «
+                            </CPaginationItem>
+                            <CPaginationItem disabled={currentPage === 1} onClick={() => handlePageChange(currentPage - 1)}>
+                              ‹
+                            </CPaginationItem>
+                            {[...Array(totalPages)].map((_, index) => (
+                              <CPaginationItem
+                                style={{background:`black`}}
+                                key={index + 1}
+                                active={index + 1 === currentPage}
+                                onClick={() => handlePageChange(index + 1)}
+                               >
+                                {index + 1}
+                              </CPaginationItem>
+                            ))}
+                            <CPaginationItem disabled={currentPage === totalPages} onClick={() => handlePageChange(currentPage + 1)}>
+                              ›
+                            </CPaginationItem>
+                            <CPaginationItem disabled={currentPage === totalPages} onClick={() => handlePageChange(totalPages)}>
+                              »
+                            </CPaginationItem>
+                         </CPagination>
+                    </div>
         {/* Complaint Details Modal */}
           <CModal
               size="lg"
@@ -248,29 +273,29 @@ const ComplaintsTable = ({
                                 <p><strong> <CIcon icon={cilInfo} className="me-1"/>Priority:</strong> {selectedComplaint?.priority || 'N/A'}</p>
                                 <p><strong> <CIcon icon={cilDescription} className="me-1"/>Notes:</strong> {selectedComplaint?.notes || 'N/A'}</p>
                                 <p><strong><CIcon icon={cilDescription} className="me-1" />Feedback:</strong> {selectedComplaint?.feedback || 'N/A'}</p>
-                   {role === 'Admin' && (
-                    <div className="d-flex align-items-center mt-2">
-                                    <CFormSelect
-                                        name="assignedTo"
-                                        value={assignee[selectedComplaint._id] || ''}
-                                         onChange={(e) => handleAssigneeChange(e, selectedComplaint._id)}
-                                        className="me-2"
-                                        style={{width: '200px'}}
-                                     >
-                                        <option value="" disabled>
-                                            Select Assignee
-                                         </option>
-                                        {inspectors?.map((user) => (
-                                             <option key={user._id} value={user._id}>
-                                                {user.name}
-                                             </option>
-                                            ))}
-                                    </CFormSelect>
-                                    <CButton color="dark" size="sm" onClick={() => handleAssignClick(selectedComplaint._id)} title="Assign Complaint">
-                                        <CIcon icon={cilUser} /> Assign
-                                   </CButton>
-                                </div>
-                )}
+                    {role === 'Admin' && (
+                        <div className="d-flex align-items-center mt-2">
+                            <CFormSelect
+                                name="assignedTo"
+                                value={assignee[selectedComplaint._id] || ''}
+                                onChange={(e) => handleAssigneeChange(e, selectedComplaint._id)}
+                                className="me-2"
+                                style={{ width: '200px' }}
+                            >
+                                <option value="" disabled>
+                                    Select Assignee
+                                </option>
+                                {inspectors?.map((user) => (
+                                    <option key={user._id} value={user._id}>
+                                        {user.name}
+                                    </option>
+                                ))}
+                            </CFormSelect>
+                            <CButton color="dark" size="sm" onClick={() => handleAssignClick(selectedComplaint._id)} title="Assign Complaint">
+                                <CIcon icon={cilUser} /> Assign
+                            </CButton>
+                        </div>
+                    )}
                          {role === 'Inspector' && (
                          <div className="mt-2 d-flex align-items-center">
                             <CFormInput
@@ -282,7 +307,7 @@ const ComplaintsTable = ({
                          />
                      <CButton color="dark" size="sm" onClick={() => handleFeedbackSubmit(selectedComplaint._id)} title="Submit Feedback">Submit Feedback</CButton>
                         </div>
-                    )}
+                     )}
                 </div>
             )}
         </CModalBody>

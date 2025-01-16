@@ -97,7 +97,7 @@ const ComplaintsTableData = ({
                  {role === 'Admin' && (
                  <CTableHeaderCell className="bg-body-tertiary"><CIcon icon={cilUser} className="me-1"/> Assigned To</CTableHeaderCell>
                 )}
-                <CTableHeaderCell className="bg-body-tertiary">Actions</CTableHeaderCell>
+                <CTableHeaderCell  className="bg-body-tertiary">Actions</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
           <CTableBody>
@@ -124,7 +124,7 @@ const ComplaintsTableData = ({
                   </CTableDataCell>
                     )}
                 <CTableDataCell  >
-                      <CDropdown >
+                      <CDropdown style={{ zIndex: 10}}>
                          <CDropdownToggle color="light" caret={false} size="sm" title="Actions">
                                             <CIcon icon={cilOptions} />
                                         </CDropdownToggle>
