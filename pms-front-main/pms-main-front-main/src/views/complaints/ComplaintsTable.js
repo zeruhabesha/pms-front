@@ -34,6 +34,9 @@ import { fetchInspectors } from '../../api/actions/userActions';
 import ComplaintsTableActions from "./ComplaintsTableActions";
 import ComplaintsTableData from "./ComplaintsTableData";
 import { decryptData } from '../../api/utils/crypto';
+import ComplaintAssign from "./ComplaintAssign";
+import Feedback from "./Feedback";
+
 
 
 const ComplaintsTable = ({
@@ -46,8 +49,6 @@ const ComplaintsTable = ({
   handleDelete,
   handleEdit,
   handlePageChange,
-    handleAssign,
-    handleFeedback,
 }) => {
      const dispatch = useDispatch();
     const [modalVisible, setModalVisible] = useState(false);
@@ -58,6 +59,8 @@ const ComplaintsTable = ({
      const [inspectors, setInspectors] = useState([]);
       const { users } = useSelector(state => state.user);
       const [role, setRole] = useState(null);
+      const [assignModalVisible, setAssignModalVisible] = useState(false);
+      const [feedbackModalVisible, setFeedbackModalVisible] = useState(false);
        const [error, setError] = useState(null);
 
      useEffect(() => {
@@ -92,7 +95,24 @@ const ComplaintsTable = ({
         setModalVisible(false);
         setSelectedComplaint(null);
     };
+  
+       const handleAssignModalOpen = (complaint) => {
+           setSelectedComplaint(complaint);
+            setAssignModalVisible(true);
+       }
+   const handleAssignModalClose = () => {
+       setAssignModalVisible(false);
+       setSelectedComplaint(null)
+   }
 
+   const handleFeedbackModalOpen = (complaint) => {
+         setSelectedComplaint(complaint);
+        setFeedbackModalVisible(true)
+   };
+   const handleFeedbackModalClose = () => {
+       setFeedbackModalVisible(false);
+        setSelectedComplaint(null)
+   }
     const handleAssigneeChange = (e, complaintId) => {
     setAssignee((prevAssignee) => ({
       ...prevAssignee,
@@ -103,7 +123,10 @@ const ComplaintsTable = ({
    const handleAssignClick = (complaintId) => {
         const userId = assignee[complaintId];
           if (userId) {
-              handleAssign(complaintId, userId)
+             // handleAssign(complaintId, userId)
+               console.log(complaintId,userId)
+            setAssignModalVisible(false);
+            setSelectedComplaint(null);
             } else {
             toast.error('Please select an assignee');
             }
@@ -118,7 +141,10 @@ const ComplaintsTable = ({
   };
 
     const handleFeedbackSubmit = (complaintId) => {
-      handleFeedback(complaintId, feedbackText[complaintId] || '');
+      //handleFeedback(complaintId, feedbackText[complaintId] || '');
+        console.log(complaintId, feedbackText[complaintId] )
+        setFeedbackModalVisible(false);
+        setSelectedComplaint(null)
     };
 
    const formatDate = (dateString) => {
@@ -215,17 +241,10 @@ const ComplaintsTable = ({
                handleEdit={handleEdit}
               handleDelete={handleDelete}
                 handleModalOpen={handleModalOpen}
-               users={users}
-               handleAssign={handleAssign}
-                handleFeedback={handleFeedback}
-               handleAssigneeChange={handleAssigneeChange}
-             handleFeedbackSubmit={handleFeedbackSubmit}
-              assignee={assignee}
-                feedbackText={feedbackText}
-               inspectors={inspectors}
-               formatDate={formatDate}
-                 handleAssignClick={handleAssignClick}
-                role={role}
+              users={users}
+               handleAssignModalOpen={handleAssignModalOpen}
+              handleFeedbackModalOpen={handleFeedbackModalOpen}
+                 role={role}
            />
                 <div className="pagination-container d-flex justify-content-between align-items-center mt-3">
                         <span>Total Complaints: {totalComplaints}</span>
@@ -273,41 +292,7 @@ const ComplaintsTable = ({
                                 <p><strong> <CIcon icon={cilInfo} className="me-1"/>Priority:</strong> {selectedComplaint?.priority || 'N/A'}</p>
                                 <p><strong> <CIcon icon={cilDescription} className="me-1"/>Notes:</strong> {selectedComplaint?.notes || 'N/A'}</p>
                                 <p><strong><CIcon icon={cilDescription} className="me-1" />Feedback:</strong> {selectedComplaint?.feedback || 'N/A'}</p>
-                    {role === 'Admin' && (
-                        <div className="d-flex align-items-center mt-2">
-                            <CFormSelect
-                                name="assignedTo"
-                                value={assignee[selectedComplaint._id] || ''}
-                                onChange={(e) => handleAssigneeChange(e, selectedComplaint._id)}
-                                className="me-2"
-                                style={{ width: '200px' }}
-                            >
-                                <option value="" disabled>
-                                    Select Assignee
-                                </option>
-                                {inspectors?.map((user) => (
-                                    <option key={user._id} value={user._id}>
-                                        {user.name}
-                                    </option>
-                                ))}
-                            </CFormSelect>
-                            <CButton color="dark" size="sm" onClick={() => handleAssignClick(selectedComplaint._id)} title="Assign Complaint">
-                                <CIcon icon={cilUser} /> Assign
-                            </CButton>
-                        </div>
-                    )}
-                         {role === 'Inspector' && (
-                         <div className="mt-2 d-flex align-items-center">
-                            <CFormInput
-                            type="text"
-                            placeholder="Enter feedback"
-                            value={feedbackText[selectedComplaint._id] || ''}
-                             onChange={(e) => handleFeedbackChange(e, selectedComplaint._id)}
-                            className="me-2"
-                         />
-                     <CButton color="dark" size="sm" onClick={() => handleFeedbackSubmit(selectedComplaint._id)} title="Submit Feedback">Submit Feedback</CButton>
-                        </div>
-                     )}
+
                 </div>
             )}
         </CModalBody>
@@ -317,7 +302,58 @@ const ComplaintsTable = ({
           </CButton>
         </CModalFooter>
       </CModal>
+      
+             {/* Assign Modal */}
+                <CModal
+                visible={assignModalVisible}
+                onClose={handleAssignModalClose}
+            >
+                <CModalHeader>
+                    <CModalTitle>Assign Complaint</CModalTitle>
+                </CModalHeader>
+                <CModalBody>
+                    {selectedComplaint && (
+                        <ComplaintAssign
+                            inspectors={inspectors}
+                            assignee={assignee[selectedComplaint._id] || ''}
+                            handleAssigneeChange={handleAssigneeChange}
+                            complaintId={selectedComplaint._id}
+                            handleAssignClick={handleAssignClick}
+                             />
+                    )}
+                </CModalBody>
+                <CModalFooter>
+                    <CButton color="secondary" onClick={handleAssignModalClose}>
+                        Cancel
+                    </CButton>
 
+                </CModalFooter>
+            </CModal>
+                {/* Feedback Modal */}
+                <CModal
+                    visible={feedbackModalVisible}
+                     onClose={handleFeedbackModalClose}
+                >
+                    <CModalHeader>
+                        <CModalTitle>Feedback</CModalTitle>
+                    </CModalHeader>
+                    <CModalBody>
+                        {selectedComplaint && (
+                           <Feedback
+                           feedbackText={feedbackText[selectedComplaint._id] || ''}
+                                handleFeedbackChange={handleFeedbackChange}
+                                complaintId={selectedComplaint._id}
+                                handleFeedbackSubmit={handleFeedbackSubmit}
+                           />
+                        )}
+                    </CModalBody>
+                    <CModalFooter>
+                        <CButton color="secondary" onClick={handleFeedbackModalClose}>
+                            Cancel
+                        </CButton>
+
+                    </CModalFooter>
+                </CModal>
     </div>
   );
 };

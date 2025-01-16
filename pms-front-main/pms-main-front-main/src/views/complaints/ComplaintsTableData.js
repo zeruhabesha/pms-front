@@ -15,7 +15,6 @@ import {
 import { CIcon } from '@coreui/icons-react';
 import { cilPencil, cilTrash, cilUser, cilOptions, cilDescription, cilCalendar, cilInfo, cilHome, cilList } from '@coreui/icons';
 import { toast } from 'react-toastify';
-
 const ComplaintsTableData = ({
     complaints = [],
     currentPage,
@@ -26,16 +25,9 @@ const ComplaintsTableData = ({
     handleDelete,
     handleModalOpen,
     users,
-     handleAssign,
-     handleFeedback,
-     handleAssigneeChange,
-     handleFeedbackSubmit,
-      assignee,
-      feedbackText,
-      inspectors,
-      formatDate,
-    handleAssignClick,
-      role,
+   handleAssignModalOpen,
+     handleFeedbackModalOpen,
+     role
 }) => {
 
     const sortedComplaints = useMemo(() => {
@@ -94,9 +86,6 @@ const ComplaintsTableData = ({
                   <CIcon icon={sortConfig.direction === 'ascending' ? 'arrow-top' : 'arrow-bottom'} />
                 )}
               </CTableHeaderCell>
-                 {role === 'Admin' && (
-                 <CTableHeaderCell className="bg-body-tertiary"><CIcon icon={cilUser} className="me-1"/> Assigned To</CTableHeaderCell>
-                )}
                 <CTableHeaderCell  className="bg-body-tertiary">Actions</CTableHeaderCell>
             </CTableRow>
           </CTableHead>
@@ -118,13 +107,9 @@ const ComplaintsTableData = ({
                            <span className="text-danger">Closed</span>
                       )}
                   </CTableDataCell>
-                  {role === 'Admin' && (
-                    <CTableDataCell>
-                        {complaint.assignedTo?.name || 'Unassigned'}
-                  </CTableDataCell>
-                    )}
-                <CTableDataCell  >
-                      <CDropdown style={{ zIndex: 10}}>
+                  
+                <CTableDataCell>
+                      <CDropdown>
                          <CDropdownToggle color="light" caret={false} size="sm" title="Actions">
                                             <CIcon icon={cilOptions} />
                                         </CDropdownToggle>
@@ -138,7 +123,16 @@ const ComplaintsTableData = ({
                             <CDropdownItem onClick={() => handleModalOpen(complaint)}>
                                     Details
                             </CDropdownItem>
-
+                            {role === 'Admin' && (
+                            <CDropdownItem onClick={() => handleAssignModalOpen(complaint)}>
+                                    Assign
+                            </CDropdownItem>
+                              )}
+                            {role === 'Inspector' && (
+                             <CDropdownItem onClick={() => handleFeedbackModalOpen(complaint)}>
+                                  Feedback
+                                </CDropdownItem>
+                            )}
                         </CDropdownMenu>
                       </CDropdown>
                   </CTableDataCell>

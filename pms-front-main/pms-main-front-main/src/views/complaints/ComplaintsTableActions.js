@@ -1,8 +1,6 @@
 // src/components/complaints/ComplaintsTableActions.js
 import React from 'react';
 import {
-    CPagination,
-    CPaginationItem,
     CButton,
     CFormInput,
 } from '@coreui/react';
@@ -17,8 +15,6 @@ const ComplaintsTableActions = ({
     exportToPDF,
     searchTerm,
     setSearchTerm,
-    
-    
 }) => {
     return (
         <div className="d-flex justify-content-between mb-3">
@@ -54,7 +50,6 @@ const ComplaintsTableActions = ({
                  style={{width: '100%'}}
             />
         </div>
-        
     );
 };
 

@@ -1,4 +1,3 @@
-// src/components/complaints/ComplaintModal.js
 import React, { useEffect, useState, useCallback } from "react";
 import {
     CFormInput,
@@ -23,6 +22,15 @@ import { useNavigate } from "react-router-dom";
 import { filterProperties } from "../../api/actions/PropertyAction";
 import { addComplaint, updateComplaint } from "../../api/actions/ComplaintAction";
 import PropertySelect from "./PropertySelect";
+import {
+    cilUser,
+    cilHome,
+    cilList,
+    cilInfo,
+    cilDescription,
+    cilPaperclip
+} from '@coreui/icons';
+import { CIcon } from '@coreui/icons-react';
 
 const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
     const dispatch = useDispatch();
@@ -210,7 +218,7 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
 
                             <CRow className="g-4">
                                 <CCol xs={12} className="form-group">
-                                    <CFormLabel htmlFor="tenant">Tenant ID</CFormLabel>
+                                    <CFormLabel htmlFor="tenant"><CIcon icon={cilUser} className="me-1" />Tenant ID</CFormLabel>
                                     <CFormInput
                                         id="tenant"
                                         name="tenant"
@@ -220,17 +228,18 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
                                         className="form-control-animation"
                                     />
                                 </CCol>
-                                <CCol xs={12}>
-                                  <CFormLabel htmlFor="property">Property</CFormLabel>
-                                 <PropertySelect
-                                    value={formData.property}
-                                    onChange={handlePropertyChange}
-                                    required
-                                  />
-                                </CCol>
+
+ <CCol xs={12}>
+     <CFormLabel htmlFor="property"><CIcon icon={cilHome} className="me-1"/>Property</CFormLabel>
+        <PropertySelect
+          value={formData.property}
+          onChange={handlePropertyChange}
+         required
+         />
+</CCol>
 
                                 <CCol xs={12}>
-                                    <CFormLabel htmlFor="complaintType">Type of Complaint</CFormLabel>
+                                    <CFormLabel htmlFor="complaintType"><CIcon icon={cilList} className="me-1" />Type of Complaint</CFormLabel>
                                     <CFormSelect
                                         id="complaintType"
                                         name="complaintType"
@@ -246,7 +255,7 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
                                     </CFormSelect>
                                 </CCol>
                                 <CCol xs={12} className="form-group">
-                                    <CFormLabel htmlFor="priority">Priority Level</CFormLabel>
+                                    <CFormLabel htmlFor="priority"><CIcon icon={cilInfo} className="me-1" />Priority Level</CFormLabel>
                                     <CFormSelect
                                         id="priority"
                                         name="priority"
@@ -262,7 +271,7 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
                                     </CFormSelect>
                                 </CCol>
                                 <CCol xs={12}>
-                                    <CFormLabel htmlFor="description">Description</CFormLabel>
+                                    <CFormLabel htmlFor="description"><CIcon icon={cilDescription} className="me-1" />Description</CFormLabel>
                                     <CFormInput
                                         id="description"
                                         name="description"
@@ -271,7 +280,7 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
                                         placeholder="Enter description"
                                     />
                                 </CCol>
-                                <CCol xs={12} className="form-group">
+                                {/* <CCol xs={12} className="form-group">
                                     <CFormLabel htmlFor="feedback">Feedback</CFormLabel>
                                     <CFormInput
                                         id="feedback"
@@ -282,9 +291,9 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
                                         onChange={handleChange}
                                         className="form-control-animation"
                                     />
-                                </CCol>
+                                </CCol> */}
                                 <CCol xs={12}>
-                                    <CFormLabel htmlFor="supportingFiles">Upload Files</CFormLabel>
+                                    <CFormLabel htmlFor="supportingFiles"><CIcon icon={cilPaperclip} className="me-1" />Upload Files</CFormLabel>
                                     <CFormInput
                                         id="supportingFiles"
                                         name="supportingFiles"
