@@ -158,17 +158,16 @@ const MaintenanceTable = ({
     }, []);
 
     const confirmInspection = useCallback(
-        async (expense, estimatedCompletionTime) => {
+        async (expenseData) => {
             if (maintenanceToInspect) {
                 try {
                     await dispatch(
                         updateMaintenance({
                             id: maintenanceToInspect._id,
-                            maintenanceData: {
+                             maintenanceData: {
                                 status: 'Inspected',
-                                expense: Number(expense),
-                                estimatedCompletionTime,
-                            },
+                                expense: expenseData,
+                               },
                         }),
                     );
                     setInspectionModalVisible(false);
@@ -259,6 +258,20 @@ const MaintenanceTable = ({
         };
         return statusColorMap[status?.toLowerCase()] || 'secondary';
     }, []);
+    
+     // Status icon mapping
+    const getStatusIcon = useCallback((status) => {
+        const statusIconMap = {
+            pending: cilTransfer,
+            approved: cilCheckCircle,
+            'in progress': cilTask,
+            completed: cilThumbUp,
+            cancelled: cilXCircle,
+            inspected: cilZoom,
+            incomplete: cilThumbDown,
+        };
+         return statusIconMap[status?.toLowerCase()] || null;
+    }, []);
 
     // Sorted maintenance list
     const sortedMaintenance = useMemo(() => {
@@ -330,7 +343,7 @@ const MaintenanceTable = ({
                 visible={inspectionModalVisible}
                 setInspectionModalVisible={setInspectionModalVisible}
                 maintenanceToInspect={maintenanceToInspect}
-                confirmInspection={confirmInspection}
+                 confirmInspection={confirmInspection}
             />
             <MaintenanceCompletionModal
                 visible={completionModalVisible}
@@ -368,6 +381,7 @@ const MaintenanceTable = ({
                     {filteredMaintenance.map((maintenance, index) => {
                         const rowNumber = (currentPage - 1) * 10 + index + 1;
                         const usage = generateUsage(maintenance.status);
+                         const statusIcon = getStatusIcon(maintenance.status);
 
                         // Define statuses for which the Assign button should be displayed
                         const assignableStatuses = [
@@ -396,6 +410,7 @@ const MaintenanceTable = ({
                                 </CTableDataCell>
                                 <CTableDataCell>
                                     <CBadge color={getStatusColor(maintenance.status)}>
+                                        {statusIcon && <CIcon icon={statusIcon} size="sm" className="me-1" />}
                                         {maintenance.status || 'N/A'}
                                     </CBadge>
                                 </CTableDataCell>
@@ -416,7 +431,7 @@ const MaintenanceTable = ({
                                         onMouseLeave={closeDropdown}
                                         innerRef={ref => (dropdownRefs.current[maintenance?._id] = ref)}
                                     >
-                                        <CDropdownToggle color="light" size="sm" title="Actions">
+                                        <CDropdownToggle color="light" caret={false} size="sm" title="Actions">
                                             <CIcon icon={cilOptions} />
                                         </CDropdownToggle>
                                         <CDropdownMenu>

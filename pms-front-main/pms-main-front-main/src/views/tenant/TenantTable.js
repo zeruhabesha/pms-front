@@ -33,6 +33,9 @@ import {
     cilEnvelopeOpen,
     cilCalendar,
     cilOptions,
+    cilCheckCircle,
+    cilWarning,
+    cilXCircle,
 } from '@coreui/icons';
 import { CSVLink } from 'react-csv';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
@@ -114,6 +117,52 @@ const TenantTable = ({
         }
     };
 
+    const calculateDaysUntilEnd = (endDate) => {
+      if (!endDate) return null;
+      try {
+        const end = new Date(endDate).getTime();
+          const now = new Date().getTime();
+          const diffInTime = end - now;
+          const diffInDays = Math.ceil(diffInTime / (1000 * 3600 * 24));
+        return diffInDays;
+      } catch (e) {
+          return null
+      }
+    };
+
+  const getStatusDetails = (endDate) => {
+        const days = calculateDaysUntilEnd(endDate);
+        if (days === null) {
+          return {
+            text: "N/A",
+            color: "text-secondary",
+            icon: null
+          };
+        } else if (days > 30) {
+            return {
+                text: `${days} days`,
+                color: 'text-success',
+                icon: cilCheckCircle
+            };
+        } else if (days < 30 && days >= 0) {
+            return {
+                text: `${days} days`,
+                color: 'text-warning',
+                icon: cilWarning
+            };
+        } else if (days < 0) {
+             return {
+                text: `${days} days`,
+                color: 'text-danger',
+                icon: cilXCircle
+            };
+        }
+       return {
+            text: `${days} days`,
+            color: 'text-secondary',
+            icon: null
+        };
+    };
 
     const csvData = tenants.map((tenant, index) => ({
         index: (currentPage - 1) * itemsPerPage + index + 1,
@@ -121,6 +170,7 @@ const TenantTable = ({
         email: tenant.contactInformation?.email || 'N/A',
         startDate: formatDate(tenant.leaseAgreement?.startDate),
         endDate: formatDate(tenant.leaseAgreement?.endDate),
+         status: getStatusDetails(tenant.leaseAgreement?.endDate)?.text || 'N/A'
     }));
 
     const clipboardData = tenants
@@ -142,10 +192,11 @@ const TenantTable = ({
             tenant.contactInformation?.email || 'N/A',
             formatDate(tenant.leaseAgreement?.startDate) || 'N/A',
             formatDate(tenant.leaseAgreement?.endDate) || 'N/A',
+             getStatusDetails(tenant.leaseAgreement?.endDate)?.text || 'N/A',
         ]);
 
         doc.autoTable({
-            head: [['#', 'Name', 'Email', 'Start Date', 'End Date']],
+            head: [['#', 'Name', 'Email', 'Start Date', 'End Date', 'Status']],
             body: tableData,
             startY: 20,
         });
@@ -193,6 +244,7 @@ const TenantTable = ({
                             { label: 'Email', key: 'email' },
                             { label: 'Start Date', key: 'startDate' },
                             { label: 'End Date', key: 'endDate' },
+                                { label: 'Status', key: 'status' },
                         ]}
                         filename="tenant_data.csv"
                         className="btn btn-dark"
@@ -231,6 +283,7 @@ const TenantTable = ({
                         </CTableHeaderCell>
                         <CTableHeaderCell className="bg-body-tertiary">Contact</CTableHeaderCell>
                         <CTableHeaderCell className="bg-body-tertiary">Lease</CTableHeaderCell>
+                        <CTableHeaderCell className="bg-body-tertiary">Status</CTableHeaderCell>
                         <CTableHeaderCell className="bg-body-tertiary">Actions</CTableHeaderCell>
                     </CTableRow>
                 </CTableHead>
@@ -246,6 +299,7 @@ const TenantTable = ({
                                     alt="Tenant"
                                     style={{ width: '50px', height: '50px', borderRadius: '50%' }}
                                 />
+                                 
                                 {userPermissions?.editTenantPhotos && (
                                     <CButton
                                         color="light"
@@ -260,9 +314,6 @@ const TenantTable = ({
                             </CTableDataCell>
                             <CTableDataCell>
                                 <div>{tenant?.tenantName || 'N/A'}</div>
-                                {/* <div className="small text-body-secondary text-nowrap">
-                                        <span>ID: {tenant?._id}</span>
-                                </div> */}
                             </CTableDataCell>
                             <CTableDataCell>
                                 <div className="small text-body-secondary text-nowrap">
@@ -285,6 +336,18 @@ const TenantTable = ({
                                 </div>
                             </CTableDataCell>
                             <CTableDataCell>
+                                <div className={`d-flex align-items-center ${getStatusDetails(tenant.leaseAgreement?.endDate)?.color || ''}`}>
+                                     {getStatusDetails(tenant.leaseAgreement?.endDate)?.text}
+                                    {
+                                    getStatusDetails(tenant.leaseAgreement?.endDate)?.icon && (
+                                            <CIcon
+                                                icon={getStatusDetails(tenant.leaseAgreement?.endDate)?.icon}
+                                                 className="ms-1"
+                                             />
+                                        )}
+                                </div>
+                            </CTableDataCell>
+                            <CTableDataCell>
                                  <CDropdown
                                           variant="btn-group"
                                           isOpen={dropdownOpen === tenant?._id}
@@ -292,7 +355,7 @@ const TenantTable = ({
                                           onMouseLeave={closeDropdown}
                                           innerRef={ref => (dropdownRefs.current[tenant?._id] = ref)}
                                         >
-                                    <CDropdownToggle color="light" size="sm" title="Actions">
+                                    <CDropdownToggle color="light" caret={false} size="sm" title="Actions">
                                         <CIcon icon={cilOptions} />
                                     </CDropdownToggle>
                                         <CDropdownMenu>
@@ -319,7 +382,7 @@ const TenantTable = ({
                                                       title="View Details"
                                                 >
                                                     <CIcon icon={cilFullscreen} className="me-2"/>
-                                                        View Details
+                                                         Details
                                                 </CDropdownItem>
                                                    <CDropdownItem>
                                                           <ClearancePDFButton tenant={tenant} />

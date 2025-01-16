@@ -228,7 +228,7 @@ const AgreementTable = ({
                                         onMouseLeave={closeDropdown}
                                         innerRef={ref => (dropdownRefs.current[agreement?._id] = ref)}
                                     >
-                                        <CDropdownToggle color="light" size="sm" title="Actions">
+                                        <CDropdownToggle color="light" caret={false} size="sm" title="Actions">
                                             <CIcon icon={cilOptions} />
                                         </CDropdownToggle>
                                         <CDropdownMenu>

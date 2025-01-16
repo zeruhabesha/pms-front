@@ -1,4 +1,4 @@
-// components/complaints/ComplaintModal.js
+// src/components/complaints/ComplaintModal.js
 import React, { useEffect, useState, useCallback } from "react";
 import {
     CFormInput,
@@ -89,22 +89,22 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
     }, [editingComplaint]);
 
 
-    const handleChange = (e) => {
-        const { name, value, type, files } = e.target;
+     const handleChange = (e) => {
+         const { name, value, type, files } = e.target;
 
-        if (type === 'file') {
-            if (files.length > 5) {
-                setError('You can only upload a maximum of 5 files.');
-                return;
-            }
-            setFormData((prev) => ({
-                ...prev,
-                supportingFiles: Array.from(files),
-            }));
-        } else {
-            setFormData((prev) => ({ ...prev, [name]: value }));
-        }
-    };
+          if (type === 'file') {
+              if (files.length > 5) {
+                  setError('You can only upload a maximum of 5 files.');
+                  return;
+              }
+              setFormData((prev) => ({
+                  ...prev,
+                  supportingFiles: Array.from(files),
+              }));
+          } else {
+              setFormData((prev) => ({ ...prev, [name]: value }));
+          }
+      };
 
     const handleNestedChange = (parent, field, value) => {
         setFormData((prev) => ({
@@ -117,12 +117,12 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
         setError(null);
     };
 
-    const handlePropertyChange = (e) => {
-        setFormData((prev) => ({
-            ...prev,
-            property: e.target.value
-        }));
-    };
+   const handlePropertyChange = (e) => {
+       setFormData((prev) => ({
+           ...prev,
+           property: e.target.value
+       }));
+   };
 
     const validateForm = () => {
         if (!formData.property) return "Please select a property.";
@@ -130,6 +130,7 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
         if (!formData.description) return "Please provide a description.";
         return null;
     };
+
 
     const handleSubmit = async () => {
         setError(null);
@@ -142,28 +143,35 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
         try {
             setIsLoading(true);
             const submissionData = new FormData();
-            Object.keys(formData).forEach((key) => {
-                if (key === "supportingFiles") {
-                    formData.supportingFiles.forEach((file) => {
-                        submissionData.append(key, file);
-                    });
-                } else {
-                    submissionData.append(key, formData[key]);
-                }
-            });
+
+             submissionData.append('tenant', formData.tenant);
+            submissionData.append('property', formData.property);
+           submissionData.append('complaintType', formData.complaintType);
+             submissionData.append('description', formData.description);
+              submissionData.append('priority', formData.priority);
+              submissionData.append('feedback', formData.feedback);
+
+              if(formData.supportingFiles && formData.supportingFiles.length > 0) {
+                   formData.supportingFiles.forEach((file) => {
+                     submissionData.append('supportingFiles', file);
+                  });
+               }
+
+
             if (editingComplaint && editingComplaint._id) {
-                await dispatch(updateComplaint({ id: editingComplaint._id, complaintData: submissionData })).unwrap();
-            } else {
-                await dispatch(addComplaint(submissionData)).unwrap();
-            }
+               await dispatch(updateComplaint({ id: editingComplaint._id, complaintData: submissionData })).unwrap();
+           } else {
+               await dispatch(addComplaint(submissionData)).unwrap();
+           }
             handleClose();
         } catch (error) {
-            setError("Failed to submit complaint.");
+             setError("Failed to submit complaint.");
+              console.error(error);
         }
-         finally {
-             setIsLoading(false);
-         }
-    };
+          finally {
+               setIsLoading(false);
+          }
+   };
 
     const handleClose = () => {
         setFormData({
