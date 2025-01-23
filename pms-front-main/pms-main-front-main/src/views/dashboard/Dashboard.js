@@ -113,28 +113,28 @@ const Dashboard = () => {
     }, [maintenances]);
 
 
-    useEffect(() => {
-        const fetchPropertyTypes = async () => {
-            try {
-                const response = await propertyService.getPropertyTypes();
-                console.log('Response', response)
-                if (response?.propertyTypes) {
-                    const labels = response.propertyTypes.map(item => item.propertyType);
-                    const data = response.propertyTypes.map(item => item.count);
+    // useEffect(() => {
+    //     const fetchPropertyTypes = async () => {
+    //         try {
+    //             const response = await propertyService.getPropertyTypes();
+    //             console.log('Response', response)
+    //             if (response?.propertyTypes) {
+    //                 const labels = response.propertyTypes.map(item => item.propertyType);
+    //                 const data = response.propertyTypes.map(item => item.count);
 
-                    setPropertyTypesData(prevState => ({
-                        ...prevState,
-                        labels: labels,
-                        datasets: [{ ...prevState.datasets[0], data: data }]
-                    }));
-                }
+    //                 setPropertyTypesData(prevState => ({
+    //                     ...prevState,
+    //                     labels: labels,
+    //                     datasets: [{ ...prevState.datasets[0], data: data }]
+    //                 }));
+    //             }
 
-            } catch (error) {
-                console.error('Failed to fetch property types:', error);
-            }
-        };
-        fetchPropertyTypes();
-    }, []);
+    //         } catch (error) {
+    //             console.error('Failed to fetch property types:', error);
+    //         }
+    //     };
+    //     fetchPropertyTypes();
+    // }, []);
 
 
     const getStatusIcon = (status) => {

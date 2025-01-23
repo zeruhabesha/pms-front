@@ -87,9 +87,9 @@ export const deleteGuest = createAsyncThunk(
 );
 export const getGuestsByRegisteredBy = createAsyncThunk(
     "guest/getGuestsByRegisteredBy",
-    async (registeredBy, thunkAPI) => {
+    async ({registeredBy, page = 1, limit = 10, search = "" }, thunkAPI) => {
         try {
-            return await guestService.getGuestsByRegisteredBy(registeredBy);
+            return await guestService.getGuestsByRegisteredBy(registeredBy, { page, limit, search });
         } catch (error) {
             const message =
                 (error.response &&

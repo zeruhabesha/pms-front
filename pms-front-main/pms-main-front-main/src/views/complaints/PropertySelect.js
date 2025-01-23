@@ -1,4 +1,3 @@
-// src/components/complaints/PropertySelect.js
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchProperties } from '../../api/slice/PropertySlice';
@@ -30,11 +29,13 @@ const PropertySelect = ({ value, onChange, required }) => {
             <option value="" disabled>
                 Select Property
             </option>
-            {properties?.map((property) => (
-                <option key={property._id} value={property._id}>
-                    {property.title}
-                </option>
-            ))}
+ {properties?.map((property) => (
+    <option key={property._id} value={property._id}>
+        {property.title}
+    </option>
+))}
+
+
         </CFormSelect>
     );
 };

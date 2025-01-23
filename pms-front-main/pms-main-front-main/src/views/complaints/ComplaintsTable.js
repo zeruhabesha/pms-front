@@ -75,17 +75,21 @@ const ComplaintsTable = ({
             console.error('Role loading error:', err);
         }
     }, []);
-    useEffect(() => {
-          const fetchAllInspectors = async () => {
-            try {
-              const response = await dispatch(fetchInspectors()).unwrap();
-                setInspectors(response.inspectors);
-            } catch (error) {
-                console.error("Failed to load inspectors:", error);
-            }
-        };
-      fetchAllInspectors();
-    }, [dispatch]);
+
+ useEffect(() => {
+    const fetchAllInspectors = async () => {
+        try {
+            const response = await dispatch(fetchInspectors()).unwrap();
+            setInspectors(response.inspectors || []); // Safely handle undefined
+        } catch (error) {
+            console.error('Failed to load inspectors:', error);
+        }
+    };
+
+    fetchAllInspectors();
+}, [dispatch]);
+
+
     const handleModalOpen = (complaint) => {
         setSelectedComplaint(complaint);
         setModalVisible(true);

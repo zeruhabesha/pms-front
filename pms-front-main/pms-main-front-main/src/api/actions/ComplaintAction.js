@@ -19,7 +19,7 @@ export const addComplaint = createAsyncThunk(
     async (complaintData, { rejectWithValue }) => {
         try {
             const response = await ComplaintService.addComplaint(complaintData);
-            return response;
+            return response.data;
         } catch (error) {
             return rejectWithValue(
                 error.response?.data || { message: 'Failed to add complaint' }

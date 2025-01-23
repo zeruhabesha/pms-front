@@ -36,7 +36,7 @@ const GuestDetailsModal = ({ visible, setVisible, guestDetails }) => {
                             <p>
                                 <strong>Name:</strong> {guestDetails.name}
                             </p>
-                             <p>
+                            <p>
                                 <strong>Email:</strong> {guestDetails.email}
                             </p>
                             <p>
@@ -64,7 +64,7 @@ const GuestDetailsModal = ({ visible, setVisible, guestDetails }) => {
                             </p>
                              <p>
                                 <strong>Status:</strong> {guestDetails.status}
-                            </p>
+                                </p>
                         </CCol>
                     </CRow>
                 ) : (

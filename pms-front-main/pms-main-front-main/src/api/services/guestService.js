@@ -7,38 +7,36 @@ const createGuest = async (guestData) => {
   return response.data;
 };
 
-
 const fetchGuests = async ({ page, limit, search }) => {
   let url = `${API_URL}?page=${page}&limit=${limit}`;
   if (search) {
     url += `&search=${search}`;
   }
   const response = await httpCommon.get(url);
-   return response.data;
+  return response.data;
 };
-
 
 const fetchGuestById = async (id) => {
   const response = await httpCommon.get(`${API_URL}/${id}`);
   return response.data;
 };
 
-
 const updateGuest = async (id, guestData) => {
   const response = await httpCommon.put(`${API_URL}/${id}`, guestData);
   return response.data;
 };
-
 
 const deleteGuest = async (id) => {
   const response = await httpCommon.delete(`${API_URL}/${id}`);
   return response.data;
 };
 
-const getGuestsByRegisteredBy = async (registeredBy) => {
-  const response = await httpCommon.get(
-    `${API_URL}/registeredBy/${registeredBy}`
-  );
+const getGuestsByRegisteredBy = async (registeredBy, { page = 1, limit = 10, search = "" }) => {
+    let url = `${API_URL}/registeredBy/${registeredBy}?page=${page}&limit=${limit}`;
+  if (search) {
+    url += `&search=${search}`;
+  }
+  const response = await httpCommon.get(url);
   return response.data;
 };
 
@@ -48,7 +46,7 @@ const guestService = {
   fetchGuestById,
   updateGuest,
   deleteGuest,
-  getGuestsByRegisteredBy,
+    getGuestsByRegisteredBy,
 };
 
 export default guestService;

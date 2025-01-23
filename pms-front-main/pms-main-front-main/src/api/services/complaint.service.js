@@ -31,7 +31,7 @@ class ComplaintService {
                     'Content-Type': 'multipart/form-data',
                 },
             });
-            return response.data.data;
+            return response.data;
         } catch (error) {
             throw this.handleError(error);
         }
@@ -111,8 +111,11 @@ class ComplaintService {
         return {
             message: error.response?.data?.message || error.message,
             status: error.response?.status,
+            errorDetails: error.response?.data?.error || null,
         };
     }
+    
+    
 }
 
 export default new ComplaintService();

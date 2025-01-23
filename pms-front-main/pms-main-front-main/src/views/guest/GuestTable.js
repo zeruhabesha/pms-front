@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { cilPeople } from '@coreui/icons'; // Example: Replace with the correct library
-
+import { cilPeople } from '@coreui/icons';
 
 import {
     CTable,
@@ -42,51 +41,61 @@ import { decryptData } from '../../api/utils/crypto';
 import {  setSelectedGuest, clearError } from '../../api/slice/guestSlice';
 import GuestDetailsModal from './GuestDetailsModal';
 import debounce from 'lodash/debounce';
-import { fetchGuests, deleteGuest } from "../../api/actions/guestActions"; // Corrected import
-
+import { fetchGuests, deleteGuest } from "../../api/actions/guestActions";
 
 const GuestTable = ({
-    // guests = [], // No need to receive data as props, fetch with redux
-    // currentPage, // No need to receive as props
-    // totalPages, // No need to receive as props
-    searchTerm,
+     searchTerm,
     setSearchTerm,
-    // handleEdit,  // No need to receive as props, navigate with route
-    // handleDelete, // No need to receive as props
-    // handlePageChange, // No need to receive as props
-     itemsPerPage = 10,  // use default value
+     itemsPerPage = 10,
 }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
     const [userPermissions, setUserPermissions] = useState(null);
-     const [dropdownOpen, setDropdownOpen] = useState(null);
+    const [dropdownOpen, setDropdownOpen] = useState(null);
     const dropdownRefs = useRef({});
     const [isModalVisible, setIsModalVisible] = useState(false);
-      const guestDetails = useSelector(state => state.guest.guestDetails);
+    const guestDetails = useSelector(state => state.guest.guestDetails);
     const { guests, loading, error, totalPages, currentPage } = useSelector((state) => ({
-      guests: state.guest.guests || [],
-      loading: state.guest.loading,
-      error: state.guest.error,
-      totalPages: state.guest.totalPages || 1,
-      currentPage: state.guest.currentPage || 1,
+        guests: state.guest.guests || [],
+        loading: state.guest.loading,
+        error: state.guest.error,
+        totalPages: state.guest.totalPages || 1,
+        currentPage: state.guest.currentPage || 1,
     }));
+     const handleClickOutside = useCallback((event) => {
+            if (dropdownOpen) {
+              const ref = dropdownRefs.current[dropdownOpen];
+              if(ref && !ref.contains(event.target)){
+                setDropdownOpen(null)
+              }
+
+            }
+        }, [dropdownOpen]);
+
+
+      useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+          document.removeEventListener('mousedown', handleClickOutside);
+        };
+      }, [handleClickOutside]);
     useEffect(() => {
-      const fetchData = async () => {
-        try {
-          await dispatch(fetchGuests({
-            page: currentPage,
-            limit: itemsPerPage,
-            search: searchTerm,
-          })).unwrap();
-        } catch (error) {
-          console.error("Error fetching guests:", error);
-          // Handle error (e.g., show a notification)
-        }
-      };
-    
-      fetchData();
+        const fetchData = async () => {
+            try {
+                await dispatch(fetchGuests({
+                    page: currentPage,
+                    limit: itemsPerPage,
+                    search: searchTerm,
+                })).unwrap();
+            } catch (error) {
+                console.error("Error fetching guests:", error);
+            }
+        };
+
+        fetchData();
     }, [dispatch, currentPage, searchTerm, itemsPerPage]);
+
 
     useEffect(() => {
         const encryptedUser = localStorage.getItem('user');
@@ -137,7 +146,6 @@ const GuestTable = ({
         }
     };
 
-
     const csvData = guests.map((guest, index) => ({
         index: (currentPage - 1) * itemsPerPage + index + 1,
         name: guest?.name || 'N/A',
@@ -165,9 +173,9 @@ const GuestTable = ({
             (currentPage - 1) * itemsPerPage + index + 1,
             guest?.name || 'N/A',
             guest?.email || 'N/A',
-              guest?.phoneNumber || 'N/A',
-             formatDate(guest?.arrivalDate) || 'N/A',
-              formatDate(guest?.departureDate) || 'N/A',
+            guest?.phoneNumber || 'N/A',
+            formatDate(guest?.arrivalDate) || 'N/A',
+            formatDate(guest?.departureDate) || 'N/A',
             guest?.status || 'N/A',
         ]);
 
@@ -180,10 +188,10 @@ const GuestTable = ({
         doc.save('guest_data.pdf');
     };
     const debouncedSearch = useCallback(
-      debounce((term) => {
-        dispatch(fetchGuests({ page: 1, limit: itemsPerPage, search: term }));
-      }, 500),
-      [dispatch, itemsPerPage]
+        debounce((term) => {
+            dispatch(fetchGuests({ page: 1, limit: itemsPerPage, search: term }));
+        }, 500),
+        [dispatch, itemsPerPage]
     );
 
     const handleSearchChange = (e) => {
@@ -193,21 +201,21 @@ const GuestTable = ({
     };
 
     useEffect(() => {
-      dispatch(fetchGuests({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
+         dispatch(fetchGuests({ page: currentPage, limit: itemsPerPage, search: searchTerm }));
     }, [dispatch, currentPage, searchTerm, itemsPerPage]);
 
-  const handlePageChange = (page) => {
-      if (page >= 1 && page <= totalPages && page !== currentPage) {
-        dispatch(fetchGuests({ page, limit: itemsPerPage, search: searchTerm }));
-      }
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages && page !== currentPage) {
+            dispatch(fetchGuests({ page, limit: itemsPerPage, search: searchTerm }));
+        }
     };
     const handleEdit = (id) => {
-      navigate(`/edit-guest/${id}`);
+        navigate(`/edit-guest/${id}`);
     };
     const handleDelete = (id) => {
-      if (window.confirm("Are you sure you want to delete this guest?")) {
-        dispatch(deleteGuest(id));
-      }
+        if (window.confirm("Are you sure you want to delete this guest?")) {
+            dispatch(deleteGuest(id));
+        }
     };
     const toggleDropdown = (guestId) => {
         setDropdownOpen(prevState => prevState === guestId ? null : guestId);
@@ -298,7 +306,7 @@ const GuestTable = ({
                                 <CIcon icon={sortConfig.direction === 'ascending' ? cilArrowTop : cilArrowBottom} />
                             )}
                         </CTableHeaderCell>
-                         <CTableHeaderCell className="bg-body-tertiary" onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
+                        <CTableHeaderCell className="bg-body-tertiary" onClick={() => handleSort('status')} style={{ cursor: 'pointer' }}>
                             Status
                             {sortConfig.key === 'status' && (
                                 <CIcon icon={sortConfig.direction === 'ascending' ? cilArrowTop : cilArrowBottom} />
@@ -316,58 +324,60 @@ const GuestTable = ({
                             <CTableDataCell>
                                 {guest?.name || 'N/A'}
                             </CTableDataCell>
-                             <CTableDataCell>
-                                {guest?.email || 'N/A'}
-                             </CTableDataCell>
                             <CTableDataCell>
-                                 {guest?.phoneNumber || 'N/A'}
+                                {guest?.email || 'N/A'}
+                            </CTableDataCell>
+                            <CTableDataCell>
+                                {guest?.phoneNumber || 'N/A'}
                             </CTableDataCell>
                             <CTableDataCell>
                                 {formatDate(guest?.arrivalDate) || 'N/A'}
                             </CTableDataCell>
-                             <CTableDataCell>
+                            <CTableDataCell>
                                 {formatDate(guest?.departureDate) || 'N/A'}
                             </CTableDataCell>
                             <CTableDataCell>
-                                {guest.status === 'Checked In' ? (
-                                    <CBadge color="success">Checked In</CBadge>
-                                ) : guest.status === 'Checked Out' ? (
-                                    <CBadge color="secondary">Checked Out</CBadge>
-                                ) : (
-                                    <CBadge color="warning">Pending</CBadge>
-                                )}
+                                {guest.status === 'pending' ? (
+                                        <CBadge color="warning">Pending</CBadge>
+                                    ) : guest.status === 'active' ? (
+                                        <CBadge color="success">Active</CBadge>
+                                    ) : guest.status === 'expired' ? (
+                                        <CBadge color="danger">Expired</CBadge>
+                                    ) : (
+                                      <CBadge color="secondary">Cancelled</CBadge>
+                                    )}
                             </CTableDataCell>
                             <CTableDataCell>
                                 <CDropdown
-                                      variant="btn-group"
+                                        variant="btn-group"
                                         isOpen={dropdownOpen === guest?._id}
-                                         onToggle={() => toggleDropdown(guest?._id)}
+                                        onToggle={() => toggleDropdown(guest?._id)}
                                         onMouseLeave={closeDropdown}
-                                       innerRef={ref => (dropdownRefs.current[guest?._id] = ref)}
+                                        innerRef={ref => (dropdownRefs.current[guest?._id] = ref)}
                                     >
                                         <CDropdownToggle color="light" size="sm" title="Actions">
-                                          <CIcon icon={cilOptions} />
-                                      </CDropdownToggle>
-                                      <CDropdownMenu>
-                                        {userPermissions?.editGuest && (
-                                         <CDropdownItem  onClick={() => handleEdit(guest?._id)} title="Edit">
-                                                <CIcon icon={cilPencil} className="me-2"/>
-                                                Edit
-                                            </CDropdownItem>
-                                        )}
-                                        {userPermissions?.deleteGuest && (
-                                         <CDropdownItem  onClick={() => handleDelete(guest?._id)} title="Delete"  style={{ color: 'red' }}>
-                                                <CIcon icon={cilTrash} className="me-2"/>
-                                                 Delete
-                                            </CDropdownItem>
-                                        )}
-                                          <CDropdownItem   onClick={() => handleViewDetails(guest?._id)}
-                                              title="View Details"
+                                            <CIcon icon={cilOptions} />
+                                        </CDropdownToggle>
+                                        <CDropdownMenu>
+                                            {userPermissions?.editGuest && (
+                                                <CDropdownItem  onClick={() => handleEdit(guest?._id)} title="Edit">
+                                                    <CIcon icon={cilPencil} className="me-2"/>
+                                                    Edit
+                                                </CDropdownItem>
+                                            )}
+                                            {userPermissions?.deleteGuest && (
+                                                <CDropdownItem  onClick={() => handleDelete(guest?._id)} title="Delete"  style={{ color: 'red' }}>
+                                                    <CIcon icon={cilTrash} className="me-2"/>
+                                                    Delete
+                                                </CDropdownItem>
+                                            )}
+                                            <CDropdownItem   onClick={() => handleViewDetails(guest?._id)}
+                                                             title="View Details"
                                                 >
-                                            <CIcon icon={cilFullscreen} className="me-2"/>
-                                               View Details
-                                         </CDropdownItem>
-                                      </CDropdownMenu>
+                                                <CIcon icon={cilFullscreen} className="me-2"/>
+                                                View Details
+                                            </CDropdownItem>
+                                        </CDropdownMenu>
                                 </CDropdown>
                             </CTableDataCell>
                         </CTableRow>
@@ -410,7 +420,7 @@ const GuestTable = ({
                         »
                     </CPaginationItem>
                 </CPagination>
-                <GuestDetailsModal
+                 <GuestDetailsModal
                     visible={isModalVisible}
                     setVisible={setIsModalVisible}
                     guestDetails={guestDetails}

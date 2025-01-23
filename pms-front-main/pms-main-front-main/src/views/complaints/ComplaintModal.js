@@ -125,12 +125,14 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
         setError(null);
     };
 
-   const handlePropertyChange = (e) => {
-       setFormData((prev) => ({
-           ...prev,
-           property: e.target.value
-       }));
-   };
+    const handlePropertyChange = (e) => {
+        setFormData((prev) => ({
+            ...prev,
+            property: e.target.value, // This must be the _id of the property
+        }));
+    };
+      
+    
 
     const validateForm = () => {
         if (!formData.property) return "Please select a property.";
@@ -141,45 +143,33 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
 
 
     const handleSubmit = async () => {
-        setError(null);
-        const validationError = validateForm();
-        if (validationError) {
-            setError(validationError);
-            return;
-        }
-
+        console.log('Form Data Before Submit:', formData);
+    
         try {
-            setIsLoading(true);
             const submissionData = new FormData();
-
-             submissionData.append('tenant', formData.tenant);
-            submissionData.append('property', formData.property);
-           submissionData.append('complaintType', formData.complaintType);
-             submissionData.append('description', formData.description);
-              submissionData.append('priority', formData.priority);
-              submissionData.append('feedback', formData.feedback);
-
-              if(formData.supportingFiles && formData.supportingFiles.length > 0) {
-                   formData.supportingFiles.forEach((file) => {
-                     submissionData.append('supportingFiles', file);
-                  });
-               }
-
-
-            if (editingComplaint && editingComplaint._id) {
-               await dispatch(updateComplaint({ id: editingComplaint._id, complaintData: submissionData })).unwrap();
-           } else {
-               await dispatch(addComplaint(submissionData)).unwrap();
-           }
+            submissionData.append('tenant', formData.tenant);
+            submissionData.append('property', formData.property); // This must be an ObjectId
+            submissionData.append('complaintType', formData.complaintType);
+            submissionData.append('description', formData.description);
+            submissionData.append('priority', formData.priority);
+            submissionData.append('feedback', formData.feedback);
+    
+            if (formData.supportingFiles?.length > 0) {
+                formData.supportingFiles.forEach((file) =>
+                    submissionData.append('supportingFiles', file)
+                );
+            }
+    
+            console.log([...submissionData]); // Inspect the submitted data
+            await dispatch(addComplaint(submissionData)).unwrap();
             handleClose();
         } catch (error) {
-             setError("Failed to submit complaint.");
-              console.error(error);
+            console.error('Submit Error:', error);
+            setError('Failed to submit complaint.');
         }
-          finally {
-               setIsLoading(false);
-          }
-   };
+    };
+    
+    
 
     const handleClose = () => {
         setFormData({
@@ -231,11 +221,12 @@ const ComplaintModal = ({ visible, setVisible, editingComplaint = null }) => {
 
  <CCol xs={12}>
      <CFormLabel htmlFor="property"><CIcon icon={cilHome} className="me-1"/>Property</CFormLabel>
-        <PropertySelect
-          value={formData.property}
-          onChange={handlePropertyChange}
-         required
-         />
+     <PropertySelect
+    value={formData.property}
+    onChange={handlePropertyChange}
+    required
+/>
+
 </CCol>
 
                                 <CCol xs={12}>

@@ -17,15 +17,16 @@ export const fetchUsers = createAsyncThunk(
 // Fetch Inspectors
 export const fetchInspectors = createAsyncThunk(
     'user/fetchInspectors',
-    async ({ page, limit, searchTerm }, { rejectWithValue }) => {
+    async (_, { rejectWithValue }) => {
         try {
-            const { inspectors, totalPages, currentPage, totalInspectors } = await UserService.fetchInspector(page, limit, searchTerm);
-            return { inspectors, totalPages, currentPage, totalInspectors };
+            const response = await UserService.fetchInspector();
+            return response;
         } catch (error) {
-            return rejectWithValue(error.message);
+            return rejectWithValue(error.message || 'Failed to fetch inspectors');
         }
     }
 );
+
 
 // Fetch Maintainers
 export const fetchMaintainers = createAsyncThunk(
