@@ -27,7 +27,9 @@ import {
     cilMoney,
     cilBank,
     cilDescription,
-     cilOptions, // Changed from cilNote to cilDescription
+    cilOptions, // Changed from cilNote to cilDescription
+    cilLocationPin,
+    cilCalendar
 } from "@coreui/icons";
 import { decryptData } from '../../api/utils/crypto';
 
@@ -154,6 +156,20 @@ const AgreementTable = ({
      const closeDropdown = () => {
          setDropdownOpen(null);
      };
+    const handleClickOutside = (event) => {
+        if(dropdownOpen) {
+              if (dropdownRefs.current[dropdownOpen] && !dropdownRefs.current[dropdownOpen].contains(event.target)) {
+                    closeDropdown();
+                  }
+        }
+    };
+  useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [dropdownOpen]);
+
 
 
     return (
@@ -191,15 +207,21 @@ const AgreementTable = ({
                                 <CTableDataCell>
                                     <div>{agreement.property?.title || "N/A"}</div>
                                     <div className="small text-body-secondary text-nowrap">
-                                        <span>Address:{agreement.property?.address}</span>
+                                        <span>
+                                        <CIcon icon={cilLocationPin} size="sm" className="me-1" />
+                                            {agreement.property?.address}</span>
                                     </div>
                                 </CTableDataCell>
                                 <CTableDataCell>
                                     <div className="small text-body-secondary text-nowrap">
-                                        <span>Start:{formatDate(agreement.leaseStart)}</span>
+                                        <span>                                  
+                                              <CIcon icon={cilCalendar} size="sm" className="me-1" />
+                                        {formatDate(agreement.leaseStart)}</span>
                                     </div>
                                     <div className="small text-body-secondary text-nowrap">
-                                        <span>End:{formatDate(agreement.leaseEnd)}</span>
+                                        <span>
+                                        <CIcon icon={cilCalendar} size="sm" className="me-1" />
+                                            {formatDate(agreement.leaseEnd)}</span>
                                     </div>
                                 </CTableDataCell>
                                 <CTableDataCell>
@@ -220,12 +242,12 @@ const AgreementTable = ({
                                         title={agreement.paymentTerms?.paymentMethod}
                                     />
                                 </CTableDataCell>
-                                <CTableDataCell>
+                                 <CTableDataCell>
                                     <CDropdown
                                         variant="btn-group"
                                         isOpen={dropdownOpen === agreement?._id}
                                         onToggle={() => toggleDropdown(agreement?._id)}
-                                        onMouseLeave={closeDropdown}
+                                         onMouseLeave={closeDropdown}
                                         innerRef={ref => (dropdownRefs.current[agreement?._id] = ref)}
                                     >
                                         <CDropdownToggle color="light" caret={false} size="sm" title="Actions">

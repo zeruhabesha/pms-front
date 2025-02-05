@@ -1,52 +1,112 @@
-import httpCommon from "../http-common"; // Adjust path as needed
+import httpCommon from '../http-common';
+import { decryptData } from '../../api/utils/crypto';
 
-const API_URL = "/guests"; // Adjust if your API endpoint is different
+class GuestService {
+    constructor() {
+        this.baseURL = `${httpCommon.defaults.baseURL}/guests`;
+    }
 
-const createGuest = async (guestData) => {
-  const response = await httpCommon.post(API_URL, guestData);
-  return response.data;
-};
+    getAuthHeader() {
+        const encryptedToken = localStorage.getItem("token");
+        if (!encryptedToken) {
+            throw new Error("Authentication token is missing.");
+        }
+    
+        const token = decryptData(encryptedToken);
+        if (!token) {
+            throw new Error("Invalid authentication token.");
+        }
+    
+        return {
+            Authorization: `Bearer ${token}`,
+        };
+    }
 
-const fetchGuests = async ({ page, limit, search }) => {
-  let url = `${API_URL}?page=${page}&limit=${limit}`;
-  if (search) {
-    url += `&search=${search}`;
-  }
-  const response = await httpCommon.get(url);
-  return response.data;
-};
+    async createGuest(guestData) {
+        try {
+            const response = await httpCommon.post(this.baseURL, guestData, {
+                headers: this.getAuthHeader()
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
 
-const fetchGuestById = async (id) => {
-  const response = await httpCommon.get(`${API_URL}/${id}`);
-  return response.data;
-};
+    async fetchGuests({ page = 1, limit = 10, search = "", status = "" }) {
+        try {
+            const response = await httpCommon.get(this.baseURL, {
+                 headers: this.getAuthHeader(),
+                params: {
+                    page,
+                    limit,
+                    search,
+                      status,
+                },
+            });
+            return response.data; // Adjust based on your API response structure
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
 
-const updateGuest = async (id, guestData) => {
-  const response = await httpCommon.put(`${API_URL}/${id}`, guestData);
-  return response.data;
-};
+    async fetchGuestById(id) {
+        try {
+            const response = await httpCommon.get(`${this.baseURL}/${id}`, {
+                headers: this.getAuthHeader()
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
 
-const deleteGuest = async (id) => {
-  const response = await httpCommon.delete(`${API_URL}/${id}`);
-  return response.data;
-};
+    async updateGuest(id, guestData) {
+        try {
+            const response = await httpCommon.put(`${this.baseURL}/${id}`, guestData, {
+               headers: this.getAuthHeader()
+            });
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
 
-const getGuestsByRegisteredBy = async (registeredBy, { page = 1, limit = 10, search = "" }) => {
-    let url = `${API_URL}/registeredBy/${registeredBy}?page=${page}&limit=${limit}`;
-  if (search) {
-    url += `&search=${search}`;
-  }
-  const response = await httpCommon.get(url);
-  return response.data;
-};
+    async deleteGuest(id) {
+        try {
+            await httpCommon.delete(`${this.baseURL}/${id}`, {
+                headers: this.getAuthHeader()
+            });
+            return id; // Or return a more informative response
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
 
-const guestService = {
-  createGuest,
-  fetchGuests,
-  fetchGuestById,
-  updateGuest,
-  deleteGuest,
-    getGuestsByRegisteredBy,
-};
+    async getGuestsByRegisteredBy(registeredBy, { page = 1, limit = 10, search = "" }) {
+        try {
+            const response = await httpCommon.get(`${this.baseURL}/registeredBy/${registeredBy}`, {
+                headers: this.getAuthHeader(),
+                params: {
+                    page,
+                    limit,
+                    search,
+                },
+            });
+            return response.data; // Adjust based on your API response structure
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
 
-export default guestService;
+    handleError(error) {
+       console.error('API Error:', error);
+         if (error.response) {
+              throw new Error(error.response.data?.message || 'An error occurred');
+        }  else {
+           throw new Error(error.message || 'An error occurred');
+        }
+    }
+}
+
+export default new GuestService();

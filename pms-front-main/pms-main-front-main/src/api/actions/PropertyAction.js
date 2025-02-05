@@ -1,6 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { PropertyTypes } from '../types/propertyTypes'
 import propertyService from '../services/property.service'
+import axios from 'axios'
+
+const BASE_URL = 'http://localhost:4000/api/v1'
 
 export const fetchProperties = createAsyncThunk(
   PropertyTypes.FETCH_PROPERTIES,
@@ -14,6 +17,18 @@ export const fetchProperties = createAsyncThunk(
   },
 )
 
+export const fetchPropertiess = createAsyncThunk(
+    PropertyTypes.FETCH_PROPERTIES,
+    async (_, { rejectWithValue }) => {
+      try {
+        const response = await propertyService.filterPropertiess()
+        return response
+      } catch (error) {
+        return rejectWithValue(error.message)
+      }
+    },
+  )
+
 export const filterProperties = createAsyncThunk(
   PropertyTypes.FILTER_PROPERTIES,
   async (filterCriteria = {}, { rejectWithValue }) => {
@@ -22,22 +37,6 @@ export const filterProperties = createAsyncThunk(
       return response
     } catch (error) {
       return rejectWithValue(error.message)
-    }
-  },
-)
-
-export const uploadTenantPhoto = createAsyncThunk(
-  'tenant/uploadTenantPhoto',
-  async ({ id, photo }, { rejectWithValue }) => {
-    try {
-      const response = await TenantService.uploadPhoto(id, photo)
-      // Ensure we're returning the correct shape of data
-      return {
-        _id: id, // Changed id to _id to match the state structure
-        ...response,
-      }
-    } catch (error) {
-      return rejectWithValue(error)
     }
   },
 )
@@ -69,7 +68,6 @@ export const addPropertyImage = createAsyncThunk(
 export const updateProperty = createAsyncThunk(
   PropertyTypes.UPDATE_PROPERTY,
   async ({ id, payload }, { rejectWithValue }) => {
-    // Updated to accept a generic payload
     try {
       const response = await propertyService.updateProperty(id, payload)
       return response
@@ -78,7 +76,6 @@ export const updateProperty = createAsyncThunk(
     }
   },
 )
-
 export const updatePropertyPhotos = createAsyncThunk(
   PropertyTypes.UPDATE_PROPERTY_PHOTOS,
   async ({ id, photos }, { rejectWithValue }) => {
@@ -90,7 +87,6 @@ export const updatePropertyPhotos = createAsyncThunk(
     }
   },
 )
-
 export const getTenantById = createAsyncThunk(
   'tenant/getTenantById',
   async (id, { rejectWithValue }) => {
@@ -102,6 +98,7 @@ export const getTenantById = createAsyncThunk(
     }
   },
 )
+
 export const deleteProperty = createAsyncThunk(
   PropertyTypes.DELETE_PROPERTY,
   async (id, { rejectWithValue }) => {
@@ -149,7 +146,6 @@ export const deletePhoto = createAsyncThunk(
     }
   },
 )
-
 export const batchDelete = createAsyncThunk(
   PropertyTypes.BATCH_DELETE,
   async (propertyIds, { rejectWithValue }) => {
@@ -161,7 +157,6 @@ export const batchDelete = createAsyncThunk(
     }
   },
 )
-
 export const toggleFeatured = createAsyncThunk(
   PropertyTypes.TOGGLE_FEATURED,
   async ({ propertyId, featured }, { rejectWithValue }) => {
@@ -203,11 +198,23 @@ export const updatePhoto = createAsyncThunk(
   async ({ id, photo, photoId }, { rejectWithValue }) => {
     try {
       const response = await propertyService.updatePhoto(id, { photo, photoId })
-      return response // Return the entire response object
+      return response
     } catch (error) {
       return rejectWithValue(error.message)
     }
   },
 )
 
-// export { fetchTenantById as getTenantById };
+export const importProperties = createAsyncThunk(
+  'property/importProperties',
+  async (properties, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${BASE_URL}/properties/upload/excel`, properties, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response.data.message)
+    }
+  },
+)

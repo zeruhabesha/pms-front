@@ -1,10 +1,11 @@
+// ViewTenant.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { CRow, CCol, CCard, CCardHeader, CCardBody, CAlert } from '@coreui/react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   fetchTenants, 
   deleteTenant, 
-  fetchTenantById  // Changed from getTenantById to fetchTenantById
+  fetchTenantById  
 } from '../../api/actions/TenantActions';
 import TenantTable from './TenantTable';
 import TenantDeleteModal from './TenantDeleteModal';
@@ -19,6 +20,8 @@ import TenantDetailsModal from "./TenantDetailsModal";
 import { createSelector } from '@reduxjs/toolkit';
 import { Link } from 'react-router-dom'; // Import Link
 import { useNavigate } from 'react-router-dom';
+import ClearanceDetailsModal from '../Clearance/ClearanceDetailsModal'; // Import the modal
+
 
 const selectTenantState = createSelector(
   (state) => state.tenant,
@@ -45,6 +48,14 @@ const ViewTenant = () => {
   const [userPermissions, setUserPermissions] = useState(null);
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [tenantDetails, setTenantDetails] = useState(null);
+
+  const [clearanceModalVisible, setClearanceModalVisible] = useState(false);
+  const [selectedTenantForClearance, setSelectedTenantForClearance] = useState(null);
+  
+  const handleClearance = (tenantId) => {
+    setSelectedTenantForClearance(tenantId);
+    setClearanceModalVisible(true);
+  };
 
   const handleFetchTenants = ({ search }) => {
     dispatch(fetchTenants({ page: 1, limit: itemsPerPage, search }));
@@ -99,6 +110,8 @@ useEffect(() => {
       dispatch(fetchTenants({ page, limit: itemsPerPage, search: searchTerm }));
     }
   };
+
+
   const handleAddTenant = () => {
      navigate('/tenant/add')
    };
@@ -184,24 +197,29 @@ useEffect(() => {
               </CAlert>
             )}
             <TenantTable
-                tenants={tenants}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                handleEdit={handleEdit}
-                handleEditPhoto={handleEditPhoto}
-                handleDelete={handleDelete}
-                handlePageChange={handlePageChange}
-                handleViewDetails={handleViewDetails}
-                handleFetchTenants={handleFetchTenants}
-              />
+  tenants={tenants}
+  currentPage={currentPage}
+  totalPages={totalPages}
+  searchTerm={searchTerm}
+  setSearchTerm={setSearchTerm}
+  handleEdit={handleEdit}
+  handleEditPhoto={handleEditPhoto}
+  handleDelete={handleDelete}
+  handlePageChange={handlePageChange}
+  handleFetchTenants={handleFetchTenants}
+  handleClearance={handleClearance} // Pass the handler
+/>
 
           </CCardBody>
         </CCard>
       </CCol>
 
-     
+      <ClearanceDetailsModal
+        visible={clearanceModalVisible}
+        setVisible={setClearanceModalVisible}
+        tenantId={selectedTenantForClearance} // Pass the tenant ID to the modal
+      />
+
       <TenantDeleteModal
         visible={deleteModalVisible}
         setDeleteModalVisible={setDeleteModalVisible}

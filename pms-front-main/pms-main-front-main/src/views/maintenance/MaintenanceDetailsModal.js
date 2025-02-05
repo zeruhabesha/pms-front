@@ -24,57 +24,40 @@ import {
     cilClock,
     cilInfo,
     cilDescription,
-    cilImage,
-    cilMoney, // Import cilMoney here
+     cilImage,
+    cilMoney,
 } from '@coreui/icons';
 import { CIcon } from '@coreui/icons-react';
+import { format } from 'date-fns';
 
 const MaintenanceDetailsModal = ({ visible, setVisible, maintenance }) => {
     if (!maintenance) return null;
 
-    const formatDate = (dateString) => {
+   const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         try {
-            return new Date(dateString).toLocaleString();
+            return format(new Date(dateString), 'MMM dd, yyyy hh:mm a');
         } catch (error) {
             console.error("Error formatting date:", dateString, error);
             return 'N/A';
         }
     };
 
-    const getTenantName = () => {
-        return maintenance.tenant && maintenance.tenant.tenantName ? maintenance.tenant.tenantName : 'N/A';
-    };
 
-    const getTenantEmail = () => {
-        return maintenance.tenant && maintenance.tenant.contactInformation && maintenance.tenant.contactInformation.email ? maintenance.tenant.contactInformation.email : 'N/A';
-    };
+    const getTenantName = () => maintenance?.tenant?.name || 'N/A';
 
-    const getTenantPhone = () => {
-        return maintenance.tenant && maintenance.tenant.contactInformation && maintenance.tenant.contactInformation.phoneNumber ? maintenance.tenant.contactInformation.phoneNumber : 'N/A';
-    };
+    const getTenantEmail = () => maintenance?.tenant?.email || 'N/A';
 
-    const getLeaseStartDate = () => {
-        return maintenance.tenant && maintenance.tenant.leaseAgreement && maintenance.tenant.leaseAgreement.startDate ? formatDate(maintenance.tenant.leaseAgreement.startDate) : 'N/A';
-    };
+    const getTenantPhone = () => maintenance?.tenant?.phoneNumber || 'N/A';
 
-    const getLeaseEndDate = () => {
-          return maintenance.tenant && maintenance.tenant.leaseAgreement && maintenance.tenant.leaseAgreement.endDate ? formatDate(maintenance.tenant.leaseAgreement.endDate) : 'N/A';
-     };
-
-    const getRentAmount = () => {
-         return maintenance.tenant && maintenance.tenant.leaseAgreement && maintenance.tenant.leaseAgreement.rentAmount ? maintenance.tenant.leaseAgreement.rentAmount : 'N/A';
-    };
+    const getLeaseStartDate = () =>
+        maintenance?.tenant?.activeStart
+            ? formatDate(maintenance.tenant.activeStart)
+            : 'N/A';
 
 
-    const getPropertyUnit = () => {
-        return maintenance.tenant && maintenance.tenant.propertyInformation && maintenance.tenant.propertyInformation.unit ? maintenance.tenant.propertyInformation.unit : 'N/A';
-    };
-
-     const getPropertyTitle = () => {
-        return maintenance.property && maintenance.property.title ? maintenance.property.title : 'N/A';
-     };
-
+    const getPropertyUnit = () =>  maintenance?.property?.numberOfUnits || 'N/A';
+      const getPropertyTitle = () => maintenance?.property?.title || 'N/A';
     return (
         <CModal size="lg" visible={visible} onClose={() => setVisible(false)} backdrop="static" keyboard={false} >
             <CModalHeader>
@@ -85,7 +68,6 @@ const MaintenanceDetailsModal = ({ visible, setVisible, maintenance }) => {
                     <CTableHead>
                          <CTableRow>
                                 <CTableHeaderCell colSpan={2}><h5>
-                                  {/* <CIcon icon={cilUser} className="me-1" /> */}
                                   Tenant Information
                                     </h5></CTableHeaderCell>
                             </CTableRow>
@@ -108,7 +90,6 @@ const MaintenanceDetailsModal = ({ visible, setVisible, maintenance }) => {
                        <CTableHead>
                          <CTableRow>
                                 <CTableHeaderCell colSpan={2}><h5>
-                                    {/* <CIcon icon={cilCalendar} className="me-1" /> */}
                                      Lease Agreement
                                     </h5></CTableHeaderCell>
                             </CTableRow>
@@ -118,21 +99,17 @@ const MaintenanceDetailsModal = ({ visible, setVisible, maintenance }) => {
                             <CTableDataCell> <strong><CIcon icon={cilCalendar} className="me-1" />Lease Start Date:</strong></CTableDataCell>
                             <CTableDataCell>{getLeaseStartDate()}</CTableDataCell>
                           </CTableRow>
-                           <CTableRow>
+                           {/* <CTableRow>
                             <CTableDataCell> <strong><CIcon icon={cilCalendar} className="me-1"/>Lease End Date:</strong></CTableDataCell>
                              <CTableDataCell>{getLeaseEndDate()}</CTableDataCell>
-                          </CTableRow>
-                           <CTableRow>
-                            <CTableDataCell> <strong> <CIcon icon={cilMoney} className="me-1"/>Rent Amount:</strong> </CTableDataCell>
-                            <CTableDataCell>{getRentAmount()}</CTableDataCell>
-                            </CTableRow>
+                          </CTableRow> */}
+
                        </CTableBody>
 
                      <CTableHead>
                          <CTableRow>
                                 <CTableHeaderCell colSpan={2}><h5>
-                                  {/* <CIcon icon={cilHome} className="me-1" /> */}
-                                  Property Information
+                                   Property Information
                                   </h5></CTableHeaderCell>
                             </CTableRow>
                        </CTableHead>
@@ -149,7 +126,6 @@ const MaintenanceDetailsModal = ({ visible, setVisible, maintenance }) => {
                         <CTableHead>
                             <CTableRow>
                                 <CTableHeaderCell colSpan={2}><h5>
-                                   {/* <CIcon icon={cilList} className="me-1" /> */}
                                   Maintenance Request
                                   </h5></CTableHeaderCell>
                             </CTableRow>
@@ -183,7 +159,6 @@ const MaintenanceDetailsModal = ({ visible, setVisible, maintenance }) => {
                          <CTableHead>
                                  <CTableRow>
                                 <CTableHeaderCell colSpan={2}><h5>
-                                     {/* <CIcon icon={cilClock} className="me-1"/> */}
                                     Timestamps
                                     </h5></CTableHeaderCell>
                                  </CTableRow>
@@ -199,29 +174,81 @@ const MaintenanceDetailsModal = ({ visible, setVisible, maintenance }) => {
                               </CTableRow>
                          </CTableBody>
                 </CTable>
+                   {maintenance.photosOrVideos && maintenance.photosOrVideos.length > 0 && (
+    <>
+        <h5><CIcon icon={cilImage} className="me-1" />Photos/Videos</h5>
+        <div className="d-flex flex-wrap mt-2">
+            {maintenance.photosOrVideos.map((url, idx) => (
+                    <img
+                        key={idx}
+                        src={url}
+                         alt="Maintenance media"
+                            style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            marginRight: '10px',
+                            marginBottom: '10px',
+                        }}
+                        onError={(e) => {
+                            e.target.src = placeholderImage;
+                        }}
+                    />
+                ))}
+        </div>
+    </>
+)}
+                {maintenance.property?.photos && maintenance.property?.photos.length > 0 && (
+    <>
+        <h5><CIcon icon={cilImage} className="me-1" />Property Photos</h5>
+        <div className="d-flex flex-wrap mt-2">
+            {maintenance.property.photos.map((photo, idx) => {
 
-                {maintenance.photosOrVideos && maintenance.photosOrVideos.length > 0 && (
-                    <>
-                        <h5><CIcon icon={cilImage} className="me-1" />Photos/Videos</h5>
-                        <div className="d-flex flex-wrap mt-2">
-                            {maintenance.photosOrVideos.map((file, idx) => (
-                                <img
-                                    key={idx}
-                                     src={`http://localhost:4000/api/v1/maintenances/${maintenance._id}/${file}` || placeholderImage}
-                                    alt="Maintenance media"
-                                    style={{
-                                        width: '100px',
-                                        height: '100px',
-                                        objectFit: 'cover',
-                                        marginRight: '10px',
-                                        marginBottom: '10px',
-                                    }}
-                                    onError={(e) => { e.target.src = placeholderImage; }} // Fallback to placeholder image if the media fails to load
-                                />
-                            ))}
-                        </div>
-                    </>
-                )}
+                      const imageUrl = photo.url ? `http://localhost:4000${photo.url}` :
+                                            Object.values(photo)[0]  ? `http://localhost:4000/api/v1/properties/${Object.values(photo)[0]}` : null;
+
+                return imageUrl ?
+                    (<img
+                            key={idx}
+                        src={imageUrl}
+                        alt={`Property Image ${idx}`}
+                        style={{
+                            width: '100px',
+                            height: '100px',
+                            objectFit: 'cover',
+                            marginRight: '10px',
+                            marginBottom: '10px',
+                        }}
+                         onError={(e) => {
+                             e.target.src = placeholderImage;
+                         }}
+
+                    />) : null;
+                })}
+        </div>
+    </>
+)}
+            {maintenance.tenant?.photo && (
+                 <>
+                    <h5><CIcon icon={cilImage} className="me-1" />Tenant Photo</h5>
+                    <div className="d-flex flex-wrap mt-2">
+                     <img
+                             src={`http://localhost:4000/api/v1/tenants/${maintenance.tenant.photo}`}
+                             alt="Tenant Photo"
+                            style={{
+                                  width: '100px',
+                                  height: '100px',
+                                  objectFit: 'cover',
+                                  marginRight: '10px',
+                                  marginBottom: '10px',
+                            }}
+                              onError={(e) => {
+                             e.target.src = placeholderImage;
+                            }}
+                         />
+                    </div>
+                 </>
+            )}
             </CModalBody>
             <CModalFooter>
                 <CButton color="secondary" onClick={() => setVisible(false)}>
