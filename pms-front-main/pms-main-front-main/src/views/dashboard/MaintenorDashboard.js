@@ -7,12 +7,16 @@ import {
     CCardHeader,
 } from '@coreui/react';
 import { CChartDoughnut, CChartLine } from '@coreui/react-chartjs';
-import {generateBarChartSVG, generateLineChartSVG} from './chartHelpers';
+import {generateBarChartSVG, generateLineChartSVG} from './chartHelpers'; // Assuming these exist and are correctly implemented
 import CIcon from '@coreui/icons-react';
-import {cilWarning, cilCheckCircle, cilClock} from '@coreui/icons'; // Add relevant icons
+import {cilWarning, cilCheckCircle, cilClock} from '@coreui/icons';
 import MainChart from "./MainChart";
-import {colors, WidgetStatsContainer, AnimatedCard, ColoredCard, ChartContainer} from './styledComponents';
+import {colors, WidgetStatsContainer, AnimatedCard, ColoredCard, ChartContainer} from './styledComponents'; // Assuming styledComponents.js is correctly set up
 
+// --- Helper function to simulate blurred effect (for demonstration) ---
+const BlurredValue = ({ value }) => {
+    return <span style={{ filter: 'blur(5px)', display: 'inline-block', width: '30px', textAlign: 'center' }}>{value ? '███' : '---'}</span>;
+};
 
 const MaintenorDashboard = ({
                          stats,
@@ -22,6 +26,61 @@ const MaintenorDashboard = ({
                          recentMaintenanceActivity,
                        }) => {
 
+    // --- Fallback data in case props are not immediately available or are empty ---
+    const defaultStats = {
+        maintenanceTasks: '---',
+        overdueTasks: '---',
+        scheduledTasks: '---',
+        completedTasksToday: '---',
+    };
+
+    const currentStats = stats || defaultStats;
+
+
+    const defaultMaintenanceStatusData = {
+        labels: ['Data Not Available'],
+        datasets: [{
+            data: [100],
+            backgroundColor: [colors.gray],
+            hoverBackgroundColor: [colors.lightGray],
+        }],
+    };
+    const currentMaintenanceStatusData = maintenanceStatusData || defaultMaintenanceStatusData;
+
+
+    const defaultOverdueMaintenanceData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+        datasets: [
+            {
+                label: 'Overdue Tasks',
+                backgroundColor: colors.red,
+                borderColor: colors.darkRed,
+                data: [0, 0, 0, 0, 0, 0, 0], // No data initially
+            },
+        ],
+    };
+    const currentOverdueMaintenanceData = overdueMaintenanceData || defaultOverdueMaintenanceData;
+
+
+    const defaultScheduledMaintenanceData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+        datasets: [
+            {
+                label: 'Scheduled Tasks',
+                backgroundColor: colors.yellow,
+                borderColor: colors.darkYellow,
+                data: [0, 0, 0, 0, 0, 0, 0], // No data initially
+            },
+        ],
+    };
+    const currentScheduledMaintenanceData = scheduledMaintenanceData || defaultScheduledMaintenanceData;
+
+
+    const defaultRecentMaintenanceActivity = [
+        { type: 'pending', text: 'Loading activity...' },
+    ];
+    const currentRecentMaintenanceActivity = recentMaintenanceActivity || defaultRecentMaintenanceActivity;
+
 
     return (
       <>
@@ -30,7 +89,7 @@ const MaintenorDashboard = ({
                    <ColoredCard className="mb-4 widget-maintenance-task">
                       <div className="border-start border-start-4 py-1 px-3">
                         <div className="text-body-secondary text-truncate small">Open Maintenance Tasks</div>
-                        <div className="fs-5 fw-semibold">{stats.maintenanceTasks.toString()}</div>
+                        <div className="fs-5 fw-semibold"><BlurredValue value={currentStats.maintenanceTasks} /></div>
                           <div className="chart-container">{generateBarChartSVG([1,3,2],3, colors.white)}</div>
                       </div>
                    </ColoredCard>
@@ -39,7 +98,7 @@ const MaintenorDashboard = ({
                 <ColoredCard className="mb-4 widget-overdue-task" style={{backgroundColor: colors.red}}>
                     <div className="border-start border-start-4 py-1 px-3">
                         <div className="text-body-secondary text-truncate small">Overdue Maintenance</div>
-                        <div className="fs-5 fw-semibold">{stats.overdueTasks.toString()}</div>
+                        <div className="fs-5 fw-semibold"><BlurredValue value={currentStats.overdueTasks} /></div>
                         <div className="chart-container">{generateBarChartSVG([2,1,4], 4, colors.white)}</div>
                     </div>
                 </ColoredCard>
@@ -48,7 +107,7 @@ const MaintenorDashboard = ({
                  <ColoredCard className="mb-4 widget-scheduled-task" style={{backgroundColor: colors.yellow}}>
                     <div className="border-start border-start-4 py-1 px-3">
                         <div className="text-body-secondary text-truncate small">Scheduled Maintenance</div>
-                         <div className="fs-5 fw-semibold">{stats.scheduledTasks.toString()}</div>
+                         <div className="fs-5 fw-semibold"><BlurredValue value={currentStats.scheduledTasks} /></div>
                         <div className="chart-container">{generateBarChartSVG([3,2,1],3, colors.white)}</div>
                     </div>
                 </ColoredCard>
@@ -57,7 +116,7 @@ const MaintenorDashboard = ({
                  <ColoredCard className="mb-4 widget-completed-task" style={{backgroundColor: colors.green}}>
                     <div className="border-start border-start-4 py-1 px-3">
                         <div className="text-body-secondary text-truncate small">Completed Today</div>
-                         <div className="fs-5 fw-semibold">{stats.completedTasksToday.toString()}</div>
+                         <div className="fs-5 fw-semibold"><BlurredValue value={currentStats.completedTasksToday} /></div>
                         <div className="chart-container">{generateBarChartSVG([1,4,2], 4, colors.white)}</div>
                     </div>
                 </ColoredCard>
@@ -72,7 +131,7 @@ const MaintenorDashboard = ({
                        <CCardBody className="chart-body">
                             <ChartContainer>
                                 <CChartDoughnut
-                                    data={maintenanceStatusData}
+                                    data={currentMaintenanceStatusData}
                                     options={{
                                         plugins: {
                                             legend: { position: 'bottom' },
@@ -94,7 +153,7 @@ const MaintenorDashboard = ({
                     <CCardBody className="chart-body">
                         <ChartContainer>
                             <CChartLine
-                                data={overdueMaintenanceData}
+                                data={currentOverdueMaintenanceData}
                                 options={{
                                     plugins: {
                                         legend: { display: true },
@@ -119,7 +178,7 @@ const MaintenorDashboard = ({
                         <CCardBody className="chart-body">
                            <ChartContainer>
                                <CChartLine
-                                 data={scheduledMaintenanceData}
+                                 data={currentScheduledMaintenanceData}
                                  options={{
                                      plugins: {
                                          legend: { display: true },
@@ -140,7 +199,7 @@ const MaintenorDashboard = ({
                       <CCardHeader className="chart-header">Recent Activity</CCardHeader>
                         <CCardBody className="chart-body">
                            <ChartContainer>
-                              {recentMaintenanceActivity.map((activity, index) => (
+                              {currentRecentMaintenanceActivity.map((activity, index) => (
                                     <div key={index} style={{display: 'flex', alignItems: 'center', marginBottom: '8px'}}>
                                         {activity.type === 'completed' &&  <CIcon icon={cilCheckCircle} className="me-2" style={{ color: colors.green }}/>}
                                         {activity.type === 'warning' && <CIcon icon={cilWarning} className="me-2" style={{ color: colors.yellow }}/>}

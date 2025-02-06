@@ -1,4 +1,5 @@
 import { css } from 'styled-components';
+import React, { useState, useEffect } from 'react';
 
 export const generateBarChartSVG = (data, barHeight, color) => {
     if (!data || data.length === 0) {
