@@ -8,9 +8,22 @@ export const fetchTenants = createAsyncThunk(
     async ({ page = 1, limit = 10, search = '' } = {}, { rejectWithValue }) => {
         try {
             const response = await TenantService.fetchTenants(page, limit, search);
+            return response; // No need to modify, response is already correctly formatted
+
+        } catch (error) {
+            return rejectWithValue(error);
+        }
+    }
+);
+//Fetch Tenant By Id
+export const fetchTenantStatusCounts = createAsyncThunk(
+    "tenant/fetchTenantStatusCounts",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await tenantService.getTenantStatusCounts();
             return response;
         } catch (error) {
-            return rejectWithValue(error); // Pass the whole error object
+            return rejectWithValue(error.message);
         }
     }
 );
@@ -29,6 +42,8 @@ export const fetchTenantById = createAsyncThunk(
 
 
 // Add tenant
+// tenantActions.js
+
 export const addTenant = createAsyncThunk(
     'tenant/addTenant',
     async (tenantData, { rejectWithValue }) => {

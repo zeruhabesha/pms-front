@@ -105,35 +105,36 @@ const PropertyTable = React.memo(
       setDropdownOpen(null);
     };
 
-    const sortedProperties = useMemo(() => {
-      if (!sortConfig.key) return properties;
-
-      return [...properties].sort((a, b) => {
-        const aKey = a[sortConfig.key] || "";
-        const bKey = b[sortConfig.key] || "";
-
-        if (aKey < bKey) return sortConfig.direction === "ascending" ? -1 : 1;
-        if (aKey > bKey) return sortConfig.direction === "ascending" ? 1 : -1;
-        return 0;
-      });
-    }, [properties, sortConfig]);
 
     const filteredProperties = useMemo(() => {
-      let filtered = sortedProperties;
-
+      let filtered = properties;
+    
       if (selectedStatus) {
         filtered = filtered.filter(
           (property) => property.status === selectedStatus
         );
       }
-
+    
       filtered = filtered.filter((property) => {
         const price = Number(property.price);
         return price >= priceRange[0] && price <= priceRange[1];
       });
-
+    
       return filtered;
-    }, [sortedProperties, selectedStatus, priceRange]);
+    }, [properties, selectedStatus, priceRange]);
+    
+    const sortedProperties = useMemo(() => {
+      if (!sortConfig.key) return filteredProperties; // Return filteredProperties directly if no sorting
+    
+      return [...filteredProperties].sort((a, b) => {
+        const aKey = a[sortConfig.key] || "";
+        const bKey = b[sortConfig.key] || "";
+    
+        if (aKey < bKey) return sortConfig.direction === "ascending" ? -1 : 1;
+        if (aKey > bKey) return sortConfig.direction === "ascending" ? 1 : -1;
+        return 0;
+      });
+    }, [filteredProperties, sortConfig]);
 
     // Handle single checkbox change
     const handlePropertySelect = (propertyId) => {

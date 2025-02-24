@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo,useCallback  } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { CRow, CCol, CCard, CCardHeader, CCardBody, CAlert, CFormSelect } from '@coreui/react'
 import {
@@ -18,6 +18,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import { createSelector } from 'reselect'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import ComplaintAssign from './ComplaintAssign' // Import the component
+import { decryptData } from '../../api/utils/crypto'
 
 const selectComplaintState = (state) =>
   state.complaint || {
@@ -67,6 +68,20 @@ const ViewComplaints = () => {
       }),
     )
   }, [dispatch, currentPage, searchTerm, statusFilter])
+    const [userPermissions, setUserPermissions] = useState(null);
+  const [role, setRole] = useState(null)
+useEffect(() => {
+    try {
+      const encryptedUser = localStorage.getItem('user')
+      if (encryptedUser) {
+        const decryptedUser = decryptData(encryptedUser)
+        setUserPermissions(decryptedUser?.permissions || null)
+        setRole(decryptedUser?.role || null)
+      }
+    } catch (err) {
+      console.error('Permission loading error:', err)
+    }
+  }, [])
 
   const handlePageChange = (page) => {
     if (page !== currentPage) {
@@ -134,22 +149,21 @@ const ViewComplaints = () => {
       toast.error(error?.message || 'Failed to update complaint')
     }
   }
-  const handleAssign = async (complaintId, updatedData) => {
+  // Wrap with useCallback to prevent unnecessary recreations
+const handleAssign = useCallback(async (complaintId, updatedData) => {
     try {
-      await dispatch(assignComplaint({ id: complaintId, updatedData })).unwrap()
-      dispatch(
-        fetchComplaints({
-          page: currentPage,
-          limit: itemsPerPage,
-          search: searchTerm,
-          status: statusFilter,
-        }),
-      )
-      toast.success('Complaint assigned successfully')
+      await dispatch(assignComplaint({
+        id: complaintId,
+        updatedData
+      })).unwrap();
+
+      toast.success('Assigned successfully');
     } catch (error) {
-      toast.error(error?.message || 'Failed to assign complaint')
+      toast.error(error?.message || 'Assignment failed');
     }
-  }
+  }, [dispatch]);
+
+
   const handleAddComplaint = async (complaintData) => {
     try {
       await dispatch(addComplaint(complaintData)).unwrap()
@@ -183,9 +197,18 @@ const ViewComplaints = () => {
       toast.error(error?.message || 'Failed to submit feedback')
     }
   }
+
+  console.log("Type of handleAssign in ViewComplaints:", typeof handleAssign); // ADD THIS LINE
+
   const AssignRoute = () => {
-    return <ComplaintAssign onAssign={handleAssign} />
+    console.log("AssignRoute component is rendering!");
+    console.log("handleAssign in AssignRoute:", handleAssign);
+    const propsForComplaintAssign = { onAssign: handleAssign }; // Explicitly create props object
+    console.log("Props being passed to ComplaintAssign:", propsForComplaintAssign); // Log props object
+    return <ComplaintAssign {...propsForComplaintAssign} /> // Use spread operator
   }
+
+  
 
   return (
     <CRow>
@@ -193,7 +216,8 @@ const ViewComplaints = () => {
         <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
             <strong>Complaint</strong>
-            <div id="container">
+            {role === 'Tenant' && (
+              <div id="container">
               <button
                 className="learn-more"
                 onClick={() => {
@@ -207,6 +231,7 @@ const ViewComplaints = () => {
                 <span className="button-text">Add Complaint</span>
               </button>
             </div>
+            )}
           </CCardHeader>
           <CCardBody>
             {error && (
@@ -236,8 +261,7 @@ const ViewComplaints = () => {
             <Routes>
               <Route
                 path="/"
-                element={
-                  <ComplaintsTable
+                element={<ComplaintsTable
                     complaints={complaints}
                     totalComplaints={totalComplaints}
                     currentPage={currentPage}
@@ -250,11 +274,19 @@ const ViewComplaints = () => {
                   />
                 }
               />
-              <Route
-                path="/assign/:id"
-                element={location.pathname.startsWith('/assign/') ? <AssignRoute /> : null}
-              />
-            </Routes>
+  <Route
+  path="/assign/:id"
+  element={
+    <ComplaintAssign
+      onAssign={handleAssign}
+      currentPage={currentPage}
+      itemsPerPage={itemsPerPage}
+      searchTerm={searchTerm}
+      statusFilter={statusFilter}
+    />
+    }
+  />
+</Routes>
           </CCardBody>
         </CCard>
       </CCol>
@@ -263,8 +295,6 @@ const ViewComplaints = () => {
           visible={complaintModalVisible}
           setVisible={setComplaintModalVisible}
           editingComplaint={editingComplaint}
-          handleSave={handleSave}
-          handleAddComplaint={handleAddComplaint}
         />
       )}
       <ComplaintDeleteModal

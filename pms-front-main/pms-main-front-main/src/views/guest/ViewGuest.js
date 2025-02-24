@@ -1,3 +1,5 @@
+// src/components/guests/ViewGuest.js
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -30,6 +32,7 @@ import AddGuest from './AddGuest';
 
 import { GuestError } from "../../api/utils/guestError";
 import { decryptData } from '../../api/utils/crypto';
+import { getLeasedPropertiesForTenant } from "../../api/actions/PropertyAction";
 
 
 const selectGuestState = (state) => state.guest || {
@@ -55,6 +58,7 @@ const ViewGuest = () => {
         })
     ), []);
     const { guests, loading, error, totalPages, currentPage, totalGuests } = useSelector(guestSelector);
+    const { properties, loading: propertyLoading, error: propertyError } = useSelector((state) => state.property);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
@@ -67,15 +71,41 @@ const ViewGuest = () => {
   const itemsPerPage = 10;
    const [userPermissions, setUserPermissions] = useState(null);
 
-    useEffect(() => {
-        const encryptedUser = localStorage.getItem('user');
-        if (encryptedUser) {
-            const decryptedUser = decryptData(encryptedUser);
-            if (decryptedUser && decryptedUser.permissions) {
-                setUserPermissions(decryptedUser.permissions);
-            }
-        }
-    }, []);
+   const [role, setRole] = useState(null)
+   useEffect(() => {
+       try {
+         const encryptedUser = localStorage.getItem('user')
+         if (encryptedUser) {
+           const decryptedUser = decryptData(encryptedUser)
+           setUserPermissions(decryptedUser?.permissions || null)
+           setRole(decryptedUser?.role || null)
+         }
+       } catch (err) {
+        //  setError('Failed to load user permissions')
+         console.error('Permission loading error:', err)
+       }
+     }, [])
+
+   useEffect(() => {
+     const fetchUserAndProperties = async () => {
+       const encryptedUser = localStorage.getItem("user");
+       if (encryptedUser) {
+         try {
+           const decryptedUser = decryptData(encryptedUser);
+           if (decryptedUser && decryptedUser._id) {
+             const userId = decryptedUser._id;
+             await dispatch(getLeasedPropertiesForTenant(userId));
+           } else {
+             setErrorMessage("Invalid user data, try to log in again");
+           }
+         } catch (error) {
+           setErrorMessage("Error decoding token, try to log in again");
+         }
+       }
+     };
+
+     fetchUserAndProperties();
+   }, [dispatch]);
 
 
   useEffect(() => {
@@ -121,36 +151,10 @@ const ViewGuest = () => {
   };
 
 
-  // const handleSave = async (updatedData) => {
-  //       if (!editingGuest?._id) {
-  //           toast.error('No guest selected for editing');
-  //           return;
-  //       }
-  //     try {
-  //         await dispatch(updateGuest({ id: editingGuest._id, guestData: updatedData })).unwrap();
-  //         dispatch(fetchGuests({ page: currentPage, limit: itemsPerPage, search: searchTerm, status: statusFilter }));
-  //         setGuestModalVisible(false);
-  //         setEditingGuest(null);
-  //       toast.success('Guest updated successfully');
-
-  //     } catch (error) {
-  //         toast.error(error?.message || 'Failed to update guest');
-  //     }
-  // };
-
-    // const handleAddGuest = async (guestData) => {
-    // try {
-    //   await dispatch(addGuest(guestData)).unwrap();
-    //   dispatch(fetchGuests({ page: currentPage, limit: itemsPerPage, search: searchTerm, status: statusFilter }));
-    //   setGuestModalVisible(false);
-    //   toast.success('Guest added successfully');
-    // } catch (error) {
-    //     toast.error(error?.message || 'Failed to add guest');
-    // }
-  // };
     const handleAddGuestClick = () => {
         setAddGuestModalVisible(true)
     }
+
      const handleCancelAddGuest = () => {
         setAddGuestModalVisible(false);
     };
@@ -162,7 +166,7 @@ const ViewGuest = () => {
                   <CCardHeader className="d-flex justify-content-between align-items-center">
                       <strong>Guests</strong>
                       <div id="container">
-                           {/* {userPermissions?.addGuest && ( */}
+                      {role === 'Tenant' && (
                           <button
                               className="learn-more"
                               onClick={handleAddGuestClick}
@@ -172,7 +176,7 @@ const ViewGuest = () => {
                             </span>
                             <span className="button-text">Add Guest</span>
                           </button>
-                            {/* )} */}
+                            )} 
                       </div>
                   </CCardHeader>
                   <CCardBody>
@@ -193,8 +197,7 @@ const ViewGuest = () => {
                                         onChange={handleStatusFilterChange}
                                   >
                                     <option value="">All Statuses</option>
-                                    <option value="pending">Pending</option>
-                                      <option value="active">Active</option>
+                                    <option value="active">Active</option>
                                     <option value="expired">Expired</option>
                                     <option value="cancelled">Cancelled</option>
 
@@ -233,6 +236,7 @@ const ViewGuest = () => {
     setVisible={setAddGuestModalVisible}
     editingGuest={editingGuest}
     setEditingGuest={setEditingGuest}
+    properties={properties} // Pass properties to AddGuest
   />
           <GuestDeleteModal
             visible={deleteModalVisible}

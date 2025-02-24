@@ -1,5 +1,4 @@
-// src/views/agreement/AgreementForm.js
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     CForm,
@@ -13,19 +12,18 @@ import {
     CFormFeedback,
     CInputGroupText,
     CFormLabel,
+    CSpinner,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import PropTypes from "prop-types";
 import { decryptData } from "../../api/utils/crypto";
-import DocumentUpload from "./DocumentUpload";
-import { cilTrash, cilPlus, cilHome, cilDescription, cilLocationPin, cilMoney, cilBuilding, cilList, cilMap, cilCreditCard, cilPeople, cilSettings, cilCalendar } from "@coreui/icons";
+import { cilTrash, cilPlus, cilHome, cilDescription, cilLocationPin, cilMoney, cilList, cilMap, cilCreditCard, cilPeople, cilSettings, cilCalendar, cilCloudUpload, cilBuilding } from "@coreui/icons"; // Ensure cilBuilding is here
 
-const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = [] }) => {
+
+const AgreementForm = ({ onSubmit, tenants = [], properties = [], isSubmitting = false }) => {
     const navigate = useNavigate();
-    const [userId, setUserId] = useState(null);
     const [formData, setFormData] = useState(() => {
         const defaultForm = {
-            user: "",
             tenant: "",
             property: "",
             leaseStart: "",
@@ -39,66 +37,27 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
             documents: [],
             fileErrors: [],
             formErrors: {},
-            propertyType: "",
         };
-        if (initialData && Object.keys(initialData).length > 0) {
-            return {
-                ...defaultForm,
-                ...initialData,
-                paymentTerms: { ...defaultForm.paymentTerms, ...initialData.paymentTerms },
-            };
-        }
-        return defaultForm;
+
+        return defaultForm
     });
+
     const [filesToUpload, setFilesToUpload] = useState([]);
-
-    useEffect(() => {
-        const encryptedUser = localStorage.getItem('user');
-        if (encryptedUser) {
-            try {
-                const decryptedUser = decryptData(encryptedUser);
-                    if (decryptedUser?._id) {
-                        setUserId(decryptedUser._id);
-                    }
-                } catch (error) {
-                console.error("Failed to decrypt user data:", error);
-            }
-        }
-    }, []);
-
-    useEffect(() => {
-        setFormData(prev => ({ ...prev, user: userId }));
-    }, [userId]);
-
-    useEffect(() => {
-        console.log("initialData prop received in AgreementForm:", initialData); // Debug log
-
-        if (initialData) {
-          setFormData(prev => {
-            const updatedFormData =  {
-              ...prev,
-              ...initialData,
-              tenant: initialData.tenant?._id || '',
-              property: initialData.property?._id || '',
-              additionalOccupants: initialData.additionalOccupants || [''],
-              paymentTerms: { ...prev.paymentTerms, ...initialData.paymentTerms },
-            };
-            console.log("formData state updated based on initialData:", updatedFormData); // Debug log
-            return updatedFormData;
-          });
-        }
-      }, [initialData]);
-
+    const [isDragging, setIsDragging] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [isLoading, setIsLoading] = useState(false); // Local loading state
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+
         if (name.startsWith('paymentTerms.')) {
             const paymentTermField = name.split('.')[1];
-            setFormData(prev => ({
-                ...prev,
-                paymentTerms: { ...prev.paymentTerms, [paymentTermField]: value }
-            }));
-        } else if (name.startsWith('additionalOccupants.')) {
+            setFormData(prev => {
+                const updatedPaymentTerms = { ...prev.paymentTerms, [paymentTermField]: value };
+                return { ...prev, paymentTerms: updatedPaymentTerms };
+            });
+        }
+        else if (name.startsWith('additionalOccupants.')) {
             const index = parseInt(name.split('.')[1], 10);
             const updatedOccupants = [...formData.additionalOccupants];
             updatedOccupants[index] = value;
@@ -115,114 +74,149 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
     const handleFileChange = useCallback((files) => {
         setFilesToUpload(files);
     }, [setFilesToUpload]);
-    
+
     const handleRemoveDocument = (index) => {
         const updatedFiles = [...filesToUpload];
         updatedFiles.splice(index, 1);
         setFilesToUpload(updatedFiles);
     };
-    
+
 
     const handleAddOccupant = () => {
         setFormData(prev => ({ ...prev, additionalOccupants: [...prev.additionalOccupants, ""] }));
     };
-    
+
     const handleRemoveOccupant = (index) => {
         const updatedOccupants = [...formData.additionalOccupants];
         updatedOccupants.splice(index, 1);
         setFormData(prev => ({ ...prev, additionalOccupants: updatedOccupants }));
     };
-    
-    const handleSubmit = (e) => {
+
+    const handleSubmitLocal = async (e) => {
         e.preventDefault();
-        const errors = {}; // Use a local errors object for validation
-    
-        if (!formData.tenant) errors.tenant = 'Tenant is required';
-        if (!formData.property) errors.property = 'Property is required';
-        if (!formData.leaseStart) errors.leaseStart = 'Lease Start Date is required';
-        if (!formData.leaseEnd) errors.leaseEnd = 'Lease End Date is required';
-        if (!formData.rentAmount) errors.rentAmount = 'Rent Amount is required';
-        if (!formData.securityDeposit) errors.securityDeposit = 'Security Deposit is required';
-        if (!formData.paymentTerms.dueDate) errors['paymentTerms.dueDate'] = 'Payment Due Date is required';
-        if (!formData.paymentTerms.paymentMethod) errors['paymentTerms.paymentMethod'] = 'Payment Method is required';
-        if (!formData.user) errors.user = 'User information is missing.';
-        if (!formData.propertyType) errors.propertyType = 'Property Type is required';
-    
-    
+        setIsLoading(true); // Start local loading
+
+        const errors = {};
+
+        if (!formData.paymentTerms.dueDate) {
+            errors['paymentTerms.dueDate'] = 'Payment due date is required.';
+        }
+        if (!formData.paymentTerms.paymentMethod) {
+            errors['paymentTerms.paymentMethod'] = 'Payment method is required.';
+        }
+
         if (Object.keys(errors).length > 0) {
-            setFormData(prev => ({ ...prev, formErrors: errors })); // Set formErrors state
+            setFormData(prev => ({ ...prev, formErrors: errors }));
+            console.log('Validation errors:', errors);
+            setIsLoading(false); // Stop local loading on error
             return;
         }
-    
-        const submissionData = { ...formData, documents: filesToUpload };
-        onSubmit(submissionData);
-    };    
+
+        const formDataToSend = new FormData();
+        for (const key in formData) {
+            if (key === 'paymentTerms') {
+                formDataToSend.append('paymentTerms[paymentMethod]', formData.paymentTerms.paymentMethod); // Nest the payment terms
+                formDataToSend.append('paymentTerms[dueDate]', formData.paymentTerms.dueDate);  // Nest the payment terms
+            } else if (key === 'additionalOccupants') {
+                formData.additionalOccupants.forEach(occupant => {
+                    formDataToSend.append('additionalOccupants', occupant);
+                });
+            } else if (key !== 'documents' && key !== 'formErrors' && key !== 'fileErrors') {
+                formDataToSend.append(key, formData[key]);
+            }
+        }
+
+        filesToUpload.forEach(file => {
+            formDataToSend.append('documents', file);
+        });
+
+        console.log('Final FormData contents:');
+        for (let pair of formDataToSend.entries()) {
+            console.log(pair[0], pair[1]);
+        }
+
+        try {
+            await onSubmit(formDataToSend); // Await the onSubmit function
+        } catch (error) {
+            console.error("Error submitting form:", error);
+            // Handle the error appropriately, e.g., show an error message
+        } finally {
+            setIsLoading(false); // Stop local loading after onSubmit completes, regardless of success or failure
+        }
+    };
+
+    // Drag and Drop Handlers
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        setFilesToUpload(droppedFiles);
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+
+        const droppedFiles = Array.from(e.dataTransfer.files);
+        handleFileChange(droppedFiles);
+    };
 
 
     return (
-        <CForm onSubmit={handleSubmit} className="space-y-6 p-4" noValidate>
+        <CForm onSubmit={handleSubmitLocal} className="space-y-6 p-4" noValidate>
             <CRow className="g-4">
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="tenant"><CIcon icon={cilPeople} className="me-1"/>Tenant</CFormLabel>
+                    <CFormLabel htmlFor="tenant"><CIcon icon={cilPeople} className="me-1" />Tenant</CFormLabel>
                     <CFormSelect
                         className="form-control-md"
                         name="tenant"
                         value={formData.tenant}
                         onChange={handleInputChange}
                         required
-                        invalid={!!formData.formErrors.tenant} // Use formData.formErrors
+                        invalid={!!formData.formErrors.tenant}
                     >
                         <option value="">Select Tenant</option>
                         {tenants.map(t => (
                             <option key={t._id} value={t._id}>{t.tenantName}</option>
                         ))}
                     </CFormSelect>
-                    {formData.formErrors.tenant && ( // Use formData.formErrors
+                    {formData.formErrors.tenant && (
                         <CFormFeedback invalid>{formData.formErrors.tenant}</CFormFeedback>
                     )}
                 </CCol>
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="property"><CIcon icon={cilHome} className="me-1"/>Property</CFormLabel>
+                    <CFormLabel htmlFor="property"><CIcon icon={cilHome} className="me-1" />Property</CFormLabel>
                     <CFormSelect
                         className="form-control-md"
                         name="property"
                         value={formData.property}
                         onChange={handleInputChange}
                         required
-                        invalid={!!formData.formErrors.property} // Use formData.formErrors
+                        invalid={!!formData.formErrors.property}
                     >
                         <option value="">Select Property</option>
                         {properties.map(p => (
-                            <option key={p._id} value={p._id}>{p.title}</option>
+                            <option key={p.id} value={p.id}>{p.title}</option>
                         ))}
                     </CFormSelect>
-                    {formData.formErrors.property && ( // Use formData.formErrors
+                    {formData.formErrors.property && (
                         <CFormFeedback invalid>{formData.formErrors.property}</CFormFeedback>
                     )}
                 </CCol>
+
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="propertyType"><CIcon icon={cilBuilding} className="me-1"/>Property Type</CFormLabel>
-                    <CFormSelect
-                        className="form-control-md"
-                        id="propertyType"
-                        name="propertyType"
-                        value={formData.propertyType}
-                        onChange={handleInputChange}
-                        invalid={!!formData.formErrors.propertyType} // Use formData.formErrors
-                    >
-                        <option value="">Select Property Type</option>
-                        <option value="Apartment">Apartment</option>
-                        <option value="Detached House">Detached House</option>
-                        <option value="Semi-Detached House">Semi-Detached House</option>
-                        <option value="Condominium">Condominium</option>
-                        <option value="Townhouse">Townhouse</option>
-                    </CFormSelect>
-                    {formData.formErrors.propertyType && ( // Use formData.formErrors
-                        <CFormFeedback invalid>{formData.formErrors.propertyType}</CFormFeedback>
-                    )}
-                </CCol>
-                <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="leaseStart"><CIcon icon={cilCalendar} className="me-1"/>Lease Start Date</CFormLabel>
+                    <CFormLabel htmlFor="leaseStart"><CIcon icon={cilCalendar} className="me-1" />Lease Start Date</CFormLabel>
                     <CFormInput
                         className="form-control-md"
                         type="date"
@@ -231,14 +225,14 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                         value={formData.leaseStart}
                         onChange={handleInputChange}
                         required
-                        invalid={!!formData.formErrors.leaseStart} // Use formData.formErrors
+                        invalid={!!formData.formErrors.leaseStart}
                     />
-                    {formData.formErrors.leaseStart && ( // Use formData.formErrors
+                    {formData.formErrors.leaseStart && (
                         <CFormFeedback invalid>{formData.formErrors.leaseStart}</CFormFeedback>
                     )}
                 </CCol>
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="leaseEnd"><CIcon icon={cilCalendar} className="me-1"/>Lease End Date</CFormLabel>
+                    <CFormLabel htmlFor="leaseEnd"><CIcon icon={cilCalendar} className="me-1" />Lease End Date</CFormLabel>
                     <CFormInput
                         className="form-control-md"
                         type="date"
@@ -247,14 +241,14 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                         value={formData.leaseEnd}
                         onChange={handleInputChange}
                         required
-                        invalid={!!formData.formErrors.leaseEnd} // Use formData.formErrors
+                        invalid={!!formData.formErrors.leaseEnd}
                     />
-                    {formData.formErrors.leaseEnd && ( // Use formData.formErrors
+                    {formData.formErrors.leaseEnd && (
                         <CFormFeedback invalid>{formData.formErrors.leaseEnd}</CFormFeedback>
                     )}
                 </CCol>
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="rentAmount"><CIcon icon={cilMoney} className="me-1"/>Rent Amount</CFormLabel>
+                    <CFormLabel htmlFor="rentAmount"><CIcon icon={cilMoney} className="me-1" />Rent Amount</CFormLabel>
                     <CInputGroup>
                         <CInputGroupText>$</CInputGroupText>
                         <CFormInput
@@ -265,15 +259,15 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                             value={formData.rentAmount}
                             onChange={handleInputChange}
                             required
-                            invalid={!!formData.formErrors.rentAmount} // Use formData.formErrors
+                            invalid={!!formData.formErrors.rentAmount}
                         />
                     </CInputGroup>
-                    {formData.formErrors.rentAmount && ( // Use formData.formErrors
+                    {formData.formErrors.rentAmount && (
                         <CFormFeedback invalid>{formData.formErrors.rentAmount}</CFormFeedback>
                     )}
                 </CCol>
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="securityDeposit"><CIcon icon={cilMoney} className="me-1"/>Security Deposit</CFormLabel>
+                    <CFormLabel htmlFor="securityDeposit"><CIcon icon={cilMoney} className="me-1" />Security Deposit</CFormLabel>
                     <CInputGroup>
                         <CInputGroupText>$</CInputGroupText>
                         <CFormInput
@@ -284,15 +278,15 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                             value={formData.securityDeposit}
                             onChange={handleInputChange}
                             required
-                            invalid={!!formData.formErrors.securityDeposit} // Use formData.formErrors
+                            invalid={!!formData.formErrors.securityDeposit}
                         />
                     </CInputGroup>
-                    {formData.formErrors.securityDeposit && ( // Use formData.formErrors
+                    {formData.formErrors.securityDeposit && (
                         <CFormFeedback invalid>{formData.formErrors.securityDeposit}</CFormFeedback>
                     )}
                 </CCol>
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="paymentTerms.dueDate"><CIcon icon={cilDescription} className="me-1"/>Payment Due Date</CFormLabel>
+                    <CFormLabel htmlFor="paymentTerms.dueDate"><CIcon icon={cilDescription} className="me-1" />Payment Due Date</CFormLabel>
                     <CFormInput
                         className="form-control-md"
                         type="text"
@@ -301,21 +295,21 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                         value={formData.paymentTerms.dueDate}
                         onChange={handleInputChange}
                         required
-                        invalid={!!formData.formErrors['paymentTerms.dueDate']} // Use formData.formErrors
+                        invalid={!!formData.formErrors['paymentTerms.dueDate']}
                     />
-                    {formData.formErrors['paymentTerms.dueDate'] && ( // Use formData.formErrors
+                    {formData.formErrors['paymentTerms.dueDate'] && (
                         <CFormFeedback invalid>{formData.formErrors['paymentTerms.dueDate']}</CFormFeedback>
                     )}
                 </CCol>
                 <CCol xs={12} md={6}>
-                    <CFormLabel htmlFor="paymentTerms.paymentMethod"><CIcon icon={cilCreditCard} className="me-1"/>Payment Method</CFormLabel>
+                    <CFormLabel htmlFor="paymentTerms.paymentMethod"><CIcon icon={cilCreditCard} className="me-1" />Payment Method</CFormLabel>
                     <CFormSelect
                         className="form-control-md"
                         name="paymentTerms.paymentMethod"
                         value={formData.paymentTerms.paymentMethod}
                         onChange={handleInputChange}
                         required
-                        invalid={!!formData.formErrors['paymentTerms.paymentMethod']} // Use formData.formErrors
+                        invalid={!!formData.formErrors['paymentTerms.paymentMethod']}
                     >
                         <option value="">Select Payment Method</option>
                         <option value="cash">Cash</option>
@@ -323,13 +317,13 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                         <option value="bank transfer">Bank Transfer</option>
                         <option value="credit card">Credit Card</option>
                     </CFormSelect>
-                    {formData.formErrors['paymentTerms.paymentMethod'] && ( // Use formData.formErrors
+                    {formData.formErrors['paymentTerms.paymentMethod'] && (
                         <CFormFeedback invalid>{formData.formErrors['paymentTerms.paymentMethod']}</CFormFeedback>
                     )}
                 </CCol>
-    
+
                 <CCol xs={12}>
-                    <CFormLabel htmlFor="rulesAndConditions"><CIcon icon={cilList} className="me-1"/>Rules & Conditions</CFormLabel>
+                    <CFormLabel htmlFor="rulesAndConditions"><CIcon icon={cilList} className="me-1" />Rules & Conditions</CFormLabel>
                     <CFormTextarea
                         className="form-control-md"
                         id="rulesAndConditions"
@@ -340,7 +334,7 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                     />
                 </CCol>
                 <CCol xs={12}>
-                    <label className="block text-gray-700"><CIcon icon={cilPeople} className="me-1"/>Additional Occupants</label>
+                    <label className="block text-gray-700"><CIcon icon={cilPeople} className="me-1" />Additional Occupants</label>
                     {formData.additionalOccupants.map((occupant, index) => (
                         <CInputGroup className="mb-3" key={index}>
                             <CFormInput
@@ -367,11 +361,11 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                         color="light"
                         onClick={handleAddOccupant}
                     >
-                        <CIcon icon={cilPlus} className="me-1"/> Add Occupant
+                        <CIcon icon={cilPlus} className="me-1" /> Add Occupant
                     </CButton>
                 </CCol>
                 <CCol xs={12}>
-                    <CFormLabel htmlFor="utilitiesAndServices"><CIcon icon={cilSettings} className="me-1"/>Utilities and Services</CFormLabel>
+                    <CFormLabel htmlFor="utilitiesAndServices"><CIcon icon={cilSettings} className="me-1" />Utilities and Services</CFormLabel>
                     <CFormTextarea
                         className="form-control-md"
                         id="utilitiesAndServices"
@@ -381,16 +375,76 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                         rows={2}
                     />
                 </CCol>
+
                 <CCol xs={12}>
-                    <DocumentUpload
-                        formData={formData}
-                        fileErrors={formData.fileErrors || []}
-                        handleFileChange={handleFileChange}
-                        handleRemoveDocument={handleRemoveDocument}
-                        filesToUpload={filesToUpload}
-                        setFilesToUpload={setFilesToUpload}
-                    />
+                    <CFormLabel htmlFor="documents"><CIcon icon={cilDescription} className="me-1" />Documents</CFormLabel>
+                    <div
+                        className={`border-2 border-dashed rounded-md p-6 text-center ${
+                            isDragging ? 'border-primary bg-light' : 'border-gray-400'
+                        }`}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                    >
+                        <CIcon icon={cilCloudUpload} size="3xl" className="text-gray-500 mb-3" />
+                        <p className="text-gray-600">
+                            Drag and drop files here or click to select files
+                        </p>
+                        <input
+                            type="file"
+                            className="hidden"
+                            id="documentUpload"
+                            multiple
+                            onChange={(e) => handleFileChange(Array.from(e.target.files))}
+                        />
+                        <label htmlFor="documentUpload" className="text-blue-500 hover:underline cursor-pointer">
+                            Browse files
+                        </label>
+                        {filesToUpload.length > 0 && (
+                            <div className="mt-4">
+                                <p className="text-gray-700">Files to upload:</p>
+                                <ul>
+                                    {filesToUpload.map((file, index) => (
+                                        <li key={index} className="flex items-center justify-between py-1">
+                                            <span>{file.name}</span>
+                                            <CButton
+                                                type="button"
+                                                color="danger"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleRemoveDocument(index)}
+                                            >
+                                                <CIcon icon={cilTrash} />
+                                            </CButton>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                    {/* Upload progress bar */}
+                    {uploadProgress > 0 && (
+                        <div className="progress mt-3">
+                            <div
+                                className="progress-bar"
+                                role="progressbar"
+                                style={{ width: `${uploadProgress}%` }}
+                                aria-valuenow={uploadProgress}
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                            >{uploadProgress}%</div>
+                        </div>
+                    )}
+                    {formData.fileErrors && formData.fileErrors.length > 0 && (
+                        <ul className="text-red-600 mt-2">
+                            {formData.fileErrors.map((error, index) => (
+                                <li key={index} className="text-sm">{error}</li>
+                            ))}
+                        </ul>
+                    )}
                 </CCol>
+
                 {formData.formErrors && Object.keys(formData.formErrors).length > 0 && (
                     <CCol xs={12}>
                         <ul className="text-red-600 mt-2">
@@ -400,10 +454,12 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
                         </ul>
                     </CCol>
                 )}
-    
+
                 <CCol xs={12} className="d-flex justify-content-end gap-2">
-                    <CButton color="secondary" onClick={() => navigate("/agreement")} >Cancel</CButton>
-                    <CButton color="dark" type="submit" disabled={false}>Submit</CButton>
+                    <CButton color="secondary" onClick={() => navigate("/agreement")}>Cancel</CButton>
+                    <CButton color="dark" type="submit" disabled={isLoading}>
+                        {isLoading ? <CSpinner size="sm" /> : 'Submit'}
+                    </CButton>
                 </CCol>
             </CRow>
         </CForm>
@@ -413,7 +469,6 @@ const AgreementForm = ({ onSubmit, initialData = {}, tenants = [], properties = 
 AgreementForm.propTypes = {
     onSubmit: PropTypes.func.isRequired,
     isSubmitting: PropTypes.bool,
-    initialData: PropTypes.object,
     tenants: PropTypes.array,
     properties: PropTypes.array,
 };

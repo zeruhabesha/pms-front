@@ -49,6 +49,8 @@ import AddImage from "./AddImage";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import ImportModal from "./ImportModal"; // Import the new modal
 import PropertyTableRow from "./PropertyTableRow";
+const DefaultExcel = "/DefaultExcel.xlsx";
+
 
 const ViewProperty = () => {
   // Define state for photo modals
@@ -322,34 +324,59 @@ const ViewProperty = () => {
     navigate("/property/add");
   };
 
+    // Function to handle the download of the Excel template
+    const handleDownloadTemplate = () => {
+        const link = document.createElement('a');
+        // Adjust the path to your Excel template file
+        link.href = process.env.PUBLIC_URL + '/property_import_template.xlsx'; // Ensure this file exists in your `public` directory!
+        link.download = 'property_import_template.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+     // Function to handle the download of the Excel file
+     const handleDownloadExcel = () => {
+      const link = document.createElement('a');
+      link.href = DefaultExcel; // Use the static path
+      link.setAttribute('download', 'properties_data.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  };
+  
+
+
   return (
     <CRow>
       <CCol xs={12}>
         <CCard className="mb-4">
           <CCardHeader className="d-flex justify-content-between align-items-center">
-            <strong>
-              <CButton
+            {userPermissions?.addProperty && (
+            <><strong>
+                <CButton
                 color="dark"
                 onClick={handleOpenImportModal}
                 title="Import Data"
               >
                 Import Data
               </CButton>
+              
             </strong>
             <div className="d-flex gap-2">
-              {userPermissions?.addProperty && (
+
                 <button className="learn-more" onClick={handleAddPropertyClick}>
                   <span className="circle" aria-hidden="true">
                     <span className="icon arrow"></span>
                   </span>
                   <span className="button-text">Add Property</span>
                 </button>
-              )}
+                </div>  </> )}
 
               {/* <CButton color="dark" onClick={handleResetView} title="Reset View">
                                   Reset
                                 </CButton> */}
-            </div>
+
           </CCardHeader>
           <CCardBody>
             {error && <CAlert color="danger">{error}</CAlert>}
@@ -377,6 +404,10 @@ const ViewProperty = () => {
                 </CopyToClipboard>
                 <CButton color="dark" onClick={exportToPDF} title="Export PDF">
                   <CIcon icon={cilCloudDownload} />
+                </CButton>
+                 {/* New Button to Download Excel */}
+                <CButton color="dark" onClick={handleDownloadExcel} title="Download Excel">
+                    Default
                 </CButton>
               </div>
               <CFormInput
